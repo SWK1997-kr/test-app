@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Vinyl Studio Pro">
-  <title>Analog LP Turntable Pro</title>
+  <title>Analog LP Turntable Pro v1.3</title>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
@@ -55,7 +55,8 @@
       align-items: center;
       margin-bottom: 14px;
     }
-    .brand { font-size: 18px; font-weight: 800; letter-spacing: 1.5px; }
+    .brand { font-size: 18px; font-weight: 800; letter-spacing: 1px; }
+    .ver-tag { font-size: 11px; font-weight: 600; opacity: 0.65; margin-left: 4px; }
     .theme-btns button {
       padding: 6px 11px;
       font-size: 12px;
@@ -333,30 +334,30 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 8px;
-      padding: 0 2px;
+      padding: 4px 2px;
       font-size: 12px;
-      opacity: 0.85;
+      font-weight: 600;
     }
     .clear-all-btn {
-      background: transparent;
-      border: 1px solid rgba(150,150,150,0.4);
+      background: rgba(220, 38, 38, 0.25);
+      border: 1px solid rgba(220, 38, 38, 0.6);
       color: inherit;
       font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 5px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 6px;
       cursor: pointer;
     }
-    .clear-all-btn:active { opacity: 0.7; }
 
     .playlist {
       list-style: none;
       padding: 0;
       margin: 0;
-      max-height: 200px;
+      max-height: 220px;
       overflow-y: auto;
     }
     .playlist li {
-      padding: 9px 10px;
+      padding: 8px 10px;
       border-radius: 8px;
       margin-bottom: 6px;
       background: rgba(120,120,120,0.15);
@@ -364,21 +365,21 @@
       justify-content: space-between;
       align-items: center;
       font-size: 13px;
-      cursor: pointer;
     }
     .playlist li.active {
       background: #d97706;
       color: #fff;
       font-weight: bold;
     }
-    .track-item-left {
+    .track-select-area {
       flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      padding-right: 8px;
+      padding: 4px 8px 4px 0;
+      cursor: pointer;
     }
-    .track-item-right {
+    .track-actions {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -386,56 +387,44 @@
     }
     .badge {
       font-size: 10px;
-      padding: 2px 6px;
+      padding: 3px 6px;
       border-radius: 4px;
       background: rgba(0,0,0,0.3);
       white-space: nowrap;
     }
     .del-btn {
-      width: 24px;
-      height: 24px;
+      padding: 4px 8px;
       border-radius: 5px;
-      border: none;
-      background: rgba(0,0,0,0.35);
-      color: #fff;
-      font-size: 14px;
-      line-height: 1;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: #dc2626;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: bold;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    body.theme-mint .del-btn {
-      background: rgba(0,0,0,0.15);
-      color: #1e293b;
-    }
-    .playlist li.active .del-btn {
-      background: rgba(0,0,0,0.35);
-      color: #fff;
     }
     .del-btn:active {
-      background: #dc2626;
-      color: #fff;
+      opacity: 0.7;
     }
 
-    /* 유튜브 백그라운드 숨김 처리 */
-    #yt-hidden-container {
-      position: fixed;
-      top: -500px;
-      left: -500px;
-      width: 240px;
-      height: 150px;
-      opacity: 0;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: -1;
+    /* 유튜브 백그라운드 강제 숨김 (화면 바깥 배치 + 1px 크기) */
+    #yt-hidden-container,
+    #yt-hidden-container iframe {
+      position: fixed !important;
+      top: -9999px !important;
+      left: -9999px !important;
+      width: 1px !important;
+      height: 1px !important;
+      opacity: 0.01 !important;
+      pointer-events: none !important;
+      overflow: hidden !important;
+      z-index: -999 !important;
     }
   </style>
 </head>
 <body class="theme-wood">
 
   <div class="header">
-    <div class="brand">VINYL STUDIO PRO</div>
+    <div class="brand">VINYL STUDIO <span class="ver-tag">v1.3</span></div>
     <div class="theme-btns">
       <button onclick="setTheme('theme-wood')">원목</button>
       <button onclick="setTheme('theme-dark')">다크</button>
@@ -473,7 +462,7 @@
     </div>
   </div>
 
-  <!-- 화면에서 보이지 않게 처리된 유튜브 백그라운드 플레이어 -->
+  <!-- 화면 바깥으로 완전히 숨겨진 유튜브 오디오 엔진 -->
   <div id="yt-hidden-container">
     <div id="yt-player"></div>
   </div>
@@ -510,8 +499,8 @@
     </div>
 
     <div class="playlist-header" id="playlistHeader" style="display:none;">
-      <span id="playlistCount">총 0곡</span>
-      <button class="clear-all-btn" onclick="clearAllTracks()">전체 삭제</button>
+      <span id="playlistCount">재생목록 (0곡)</span>
+      <button type="button" class="clear-all-btn" onclick="clearAllTracks()">전체 삭제</button>
     </div>
 
     <ul class="playlist" id="playlistEl"></ul>
@@ -708,10 +697,7 @@
     }
 
     // 개별 트랙 삭제
-    function deleteTrack(idx, event) {
-      if (event && event.stopPropagation) {
-        event.stopPropagation();
-      }
+    function deleteTrack(idx) {
       var removed = playlist[idx];
       if (removed && removed.type === 'local' && removed.url) {
         URL.revokeObjectURL(removed.url);
@@ -764,7 +750,7 @@
       updateTurntableUI(false);
     }
 
-    // 플레이리스트 렌더링
+    // 플레이리스트 렌더링 (곡 선택 영역과 삭제 버튼을 완전히 분리)
     function renderPlaylist() {
       var ul = document.getElementById('playlistEl');
       var header = document.getElementById('playlistHeader');
@@ -789,194 +775,36 @@
           if (item.type === 'youtube') badgeText = 'YT 곡';
           if (item.type === 'yt_playlist') badgeText = 'YT 재생목록';
 
-          var leftSpan = document.createElement('span');
-          leftSpan.className = 'track-item-left';
-          leftSpan.innerText = (idx + 1) + '. ' + item.title;
+          // 곡 제목 영역 클릭 시 재생
+          var titleDiv = document.createElement('div');
+          titleDiv.className = 'track-select-area';
+          titleDiv.innerText = (idx + 1) + '. ' + item.title;
+          titleDiv.onclick = function() {
+            playTrack(idx);
+          };
 
-          var rightDiv = document.createElement('div');
-          rightDiv.className = 'track-item-right';
+          // 우측 배지 및 독립 삭제 버튼
+          var actionDiv = document.createElement('div');
+          actionDiv.className = 'track-actions';
 
           var badgeSpan = document.createElement('span');
           badgeSpan.className = 'badge';
           badgeSpan.innerText = badgeText;
 
           var delBtn = document.createElement('button');
+          delBtn.type = 'button';
           delBtn.className = 'del-btn';
-          delBtn.title = '삭제';
-          delBtn.innerText = '×';
-          delBtn.onclick = function(e) {
-            deleteTrack(idx, e);
+          delBtn.innerText = '삭제';
+          delBtn.onclick = function() {
+            deleteTrack(idx);
           };
 
-          rightDiv.appendChild(badgeSpan);
-          rightDiv.appendChild(delBtn);
+          actionDiv.appendChild(badgeSpan);
+          actionDiv.appendChild(delBtn);
 
-          li.appendChild(leftSpan);
-          li.appendChild(rightDiv);
-
-          li.onclick = function() { playTrack(idx); };
+          li.appendChild(titleDiv);
+          li.appendChild(actionDiv);
           ul.appendChild(li);
         })(i);
       }
     }
-
-    // 유튜브 백그라운드 트랙 로드
-    function loadYouTubeTrack(track) {
-      document.getElementById('trackSource').innerText = '유튜브 오디오 연결 중... (소리가 안 나면 재생 버튼을 눌러주세요)';
-
-      if (!ytReady || !ytPlayer) {
-        pendingTrack = track;
-        return;
-      }
-
-      if (track.type === 'youtube') {
-        ytPlayer.loadVideoById(track.videoId);
-      } else if (track.type === 'yt_playlist') {
-        ytPlayer.loadPlaylist({
-          list: track.listId,
-          listType: 'playlist'
-        });
-      }
-    }
-
-    // 트랙 재생 실행
-    function playTrack(index) {
-      if (index < 0 || index >= playlist.length) return;
-
-      currentIndex = index;
-      var track = playlist[index];
-      renderPlaylist();
-
-      document.getElementById('trackTitle').innerText = track.title;
-      var labelEl = document.getElementById('vinylLabel');
-
-      if (track.type === 'local') {
-        document.getElementById('trackSource').innerText = '로컬 오디오 파일 재생 중';
-        if (ytPlayer && ytReady && ytPlayer.stopVideo) {
-          ytPlayer.stopVideo();
-        }
-        labelEl.style.backgroundImage = 'none';
-
-        audioPlayer.src = track.url;
-        audioPlayer.playbackRate = (currentRPM === 33) ? 1.0 : 1.25;
-        audioPlayer.play();
-        updateTurntableUI(true);
-      } else if (track.type === 'youtube' || track.type === 'yt_playlist') {
-        audioPlayer.pause();
-        updateTurntableUI(false);
-        labelEl.style.backgroundImage = track.thumb ? ('url(' + track.thumb + ')') : 'none';
-        loadYouTubeTrack(track);
-      }
-    }
-
-    function togglePlay() {
-      if (currentIndex === -1) {
-        if (playlist.length > 0) playTrack(0);
-        return;
-      }
-      var track = playlist[currentIndex];
-
-      if (track.type === 'local') {
-        if (audioPlayer.paused) {
-          audioPlayer.play();
-          updateTurntableUI(true);
-        } else {
-          audioPlayer.pause();
-          updateTurntableUI(false);
-        }
-      } else if ((track.type === 'youtube' || track.type === 'yt_playlist') && ytReady && ytPlayer) {
-        var state = ytPlayer.getPlayerState();
-        if (state === 1) {
-          ytPlayer.pauseVideo();
-          updateTurntableUI(false);
-        } else {
-          ytPlayer.playVideo();
-        }
-      }
-    }
-
-    function nextTrack() {
-      if (playlist.length === 0) return;
-      var track = playlist[currentIndex];
-      if (track && track.type === 'yt_playlist' && ytReady && ytPlayer && ytPlayer.nextVideo) {
-        ytPlayer.nextVideo();
-        return;
-      }
-      var next = (currentIndex + 1) % playlist.length;
-      playTrack(next);
-    }
-
-    function prevTrack() {
-      if (playlist.length === 0) return;
-      var track = playlist[currentIndex];
-      if (track && track.type === 'yt_playlist' && ytReady && ytPlayer && ytPlayer.previousVideo) {
-        ytPlayer.previousVideo();
-        return;
-      }
-      var prev = (currentIndex - 1 + playlist.length) % playlist.length;
-      playTrack(prev);
-    }
-
-    audioPlayer.onended = function() {
-      nextTrack();
-    };
-
-    // YouTube IFrame API 로드
-    var tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    var firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-    function onYouTubeIframeAPIReady() {
-      ytPlayer = new YT.Player('yt-player', {
-        height: '150',
-        width: '240',
-        playerVars: {
-          'playsinline': 1,
-          'rel': 0,
-          'origin': window.location.origin
-        },
-        events: {
-          'onReady': function() {
-            ytReady = true;
-            if (pendingTrack) {
-              loadYouTubeTrack(pendingTrack);
-              pendingTrack = null;
-            }
-          },
-          'onStateChange': function(event) {
-            if (event.data === 1) {
-              updateTurntableUI(true);
-              document.getElementById('trackSource').innerText = '유튜브 / 유튜브 뮤직 스트리밍 재생 중';
-              if (ytPlayer.getVideoData) {
-                var data = ytPlayer.getVideoData();
-                if (data && data.title && currentIndex !== -1) {
-                  document.getElementById('trackTitle').innerText = data.title;
-                  playlist[currentIndex].title = data.title;
-                  renderPlaylist();
-                }
-                if (data && data.video_id) {
-                  document.getElementById('vinylLabel').style.backgroundImage = 'url(https://img.youtube.com/vi/' + data.video_id + '/hqdefault.jpg)';
-                }
-              }
-            } else if (event.data === 2) {
-              updateTurntableUI(false);
-              document.getElementById('trackSource').innerText = '일시정지됨';
-            } else if (event.data === 0) {
-              updateTurntableUI(false);
-              var track = playlist[currentIndex];
-              if (track && track.type !== 'yt_playlist') {
-                nextTrack();
-              }
-            }
-          },
-          'onError': function(event) {
-            updateTurntableUI(false);
-            document.getElementById('trackSource').innerText = '⚠ 외부 재생 제한 영상(오류 ' + event.data + ') - 다른 링크를 선택해 주세요';
-          }
-        }
-      });
-    }
-  </script>
-</body>
-</html>
