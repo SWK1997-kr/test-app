@@ -3,56 +3,646 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <!-- 아이패드 홈 화면 추가 시 전체 화면 앱처럼 실행 -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="내 첫 웹앱">
-  <title>아이패드 호환 테스트 웹앱</title>
+  <meta name="apple-mobile-web-app-title" content="Vinyl Studio">
+  <title>Analog LP Turntable Player</title>
   <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background-color: #f4f6f8;
       margin: 0;
-      padding: 20px;
-      text-align: center;
-      color: #222;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      transition: background-color 0.4s ease, color 0.4s ease;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    .card {
-      background: #ffffff;
-      max-width: 480px;
-      margin: 40px auto;
-      padding: 30px 20px;
+
+    /* 테마 1: 클래식 원목 (기본) */
+    body.theme-wood { background-color: #2b1d14; color: #f5ebe0; }
+    body.theme-wood .deck { background: linear-gradient(135deg, #6f4528 0%, #4a2c18 100%); border: 4px solid #382010; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+    body.theme-wood .panel { background-color: rgba(30, 18, 10, 0.75); border: 1px solid rgba(255,255,255,0.1); }
+
+    /* 테마 2: 모던 다크 스튜디오 */
+    body.theme-dark { background-color: #121214; color: #e4e4e7; }
+    body.theme-dark .deck { background: linear-gradient(135deg, #27272a 0%, #18181b 100%); border: 4px solid #3f3f46; box-shadow: 0 20px 40px rgba(0,0,0,0.8); }
+    body.theme-dark .panel { background-color: rgba(24, 24, 27, 0.85); border: 1px solid #27272a; }
+
+    /* 테마 3: 레트로 민트 파스텔 */
+    body.theme-mint { background-color: #dcebe6; color: #1e293b; }
+    body.theme-mint .deck { background: linear-gradient(135deg, #a7d7c5 0%, #74b49b 100%); border: 4px solid #5c967e; box-shadow: 0 15px 30px rgba(92,150,126,0.35); }
+    body.theme-mint .panel { background-color: rgba(255, 255, 255, 0.85); border: 1px solid #cbd5e1; }
+
+    .header {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .brand { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+    .theme-btns button {
+      padding: 6px 10px;
+      font-size: 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.25);
+      color: inherit;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    body.theme-mint .theme-btns button { background: rgba(255,255,255,0.6); border-color: #94a3b8; }
+
+    /* 턴테이블 데크 */
+    .deck {
+      position: relative;
+      width: 100%;
+      max-width: 720px;
+      height: 330px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    /* LP 레코드판 */
+    .platter {
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: #0d0d0d;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.7);
+      border: 6px solid #1f1f1f;
+    }
+    .vinyl {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: repeating-radial-gradient(
+        #111 0,
+        #111 3px,
+        #222 4px,
+        #111 5px
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .vinyl.spinning {
+      -webkit-animation: spin 4s linear infinite;
+      animation: spin 4s linear infinite;
+    }
+    @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .label {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #e63946 0%, #9e2a2b 100%);
+      background-size: cover;
+      background-position: center;
+      border: 3px solid #f1faee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .spindle {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #d4d4d8;
+      border: 2px solid #52525b;
+    }
+
+    /* 톤암 (바늘) */
+    .tonearm-base {
+      position: absolute;
+      top: 24px;
+      right: 36px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #e4e4e7, #71717a);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      z-index: 10;
+    }
+    .tonearm {
+      position: absolute;
+      top: 22px;
+      left: 20px;
+      width: 8px;
+      height: 185px;
+      background: linear-gradient(90deg, #d4d4d8, #a1a1aa);
+      border-radius: 4px;
+      -webkit-transform-origin: top center;
+      transform-origin: top center;
+      -webkit-transform: rotate(0deg);
+      transform: rotate(0deg);
+      -webkit-transition: -webkit-transform 0.8s ease-in-out;
+      transition: transform 0.8s ease-in-out;
+    }
+    .tonearm.playing {
+      -webkit-transform: rotate(26deg);
+      transform: rotate(26deg);
+    }
+    .headshell {
+      position: absolute;
+      bottom: -14px;
+      left: -5px;
+      width: 18px;
+      height: 26px;
+      background: #18181b;
+      border-radius: 3px;
+      -webkit-transform: rotate(15deg);
+      transform: rotate(15deg);
+    }
+
+    /* 좌측 하단 전원/속도 램프 */
+    .power-led {
+      position: absolute;
+      bottom: 20px;
+      left: 24px;
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      opacity: 0.85;
+    }
+    .led-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #52525b;
+      margin-right: 6px;
+    }
+    .led-dot.on {
+      background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    /* 컨트롤 패널 */
+    .panel {
+      width: 100%;
+      max-width: 720px;
       border-radius: 16px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      padding: 16px;
+      margin-bottom: 14px;
     }
-    h1 { font-size: 22px; margin-bottom: 10px; }
-    p { font-size: 15px; color: #555; line-height: 1.5; }
-    .count { font-size: 48px; font-weight: bold; color: #007aff; margin: 20px 0; }
-    button {
-      background-color: #007aff;
-      color: white;
-      border: none;
-      padding: 14px 28px;
-      font-size: 17px;
+    .now-playing {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .track-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-source { font-size: 12px; opacity: 0.7; }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .btn {
+      padding: 10px 18px;
       border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #d97706;
+      color: #fff;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-sub { background: rgba(120,120,120,0.3); color: inherit; }
+
+    /* 치직거림 믹서 */
+    .crackle-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 10px;
+      border-top: 1px solid rgba(150,150,150,0.2);
+      font-size: 13px;
+    }
+    .crackle-box input[type="range"] { width: 140px; }
+
+    /* 음원 추가 영역 */
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .input-group input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(150,150,150,0.4);
+      font-size: 14px;
+      background: rgba(255,255,255,0.9);
+      color: #111;
+    }
+    .file-label {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px dashed rgba(150,150,150,0.6);
+      cursor: pointer;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    #fileInput { display: none; }
+
+    /* 플레이리스트 */
+    .playlist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .playlist li {
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: rgba(120,120,120,0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
       cursor: pointer;
     }
-    button:active { background-color: #005bb5; }
+    .playlist li.active {
+      background: #d97706;
+      color: #fff;
+      font-weight: bold;
+    }
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.3);
+      margin-left: 8px;
+    }
+
+    /* 유튜브 숨김/미니 플레이어 (iOS 터치 호환용) */
+    #yt-wrapper {
+      width: 100%;
+      max-width: 720px;
+      text-align: center;
+      margin-bottom: 10px;
+      display: none;
+    }
+    #yt-player { border-radius: 10px; overflow: hidden; }
   </style>
 </head>
-<body>
-  <div class="card">
-    <h1>테스트 웹 앱 연결 성공!</h1>
-    <p>이 화면이 아이패드 에어 1에서 보인다면<br>구형 iOS 호환 및 배포가 완벽히 성공한 것입니다.</p>
-    <div class="count" id="num">0</div>
-    <button onclick="addCount()">버튼 터치 테스트 (+1)</button>
+<body class="theme-wood">
+
+  <div class="header">
+    <div class="brand">VINYL STUDIO PRO</div>
+    <div class="theme-btns">
+      <button onclick="setTheme('theme-wood')">원목</button>
+      <button onclick="setTheme('theme-dark')">다크</button>
+      <button onclick="setTheme('theme-mint')">민트</button>
+    </div>
   </div>
 
+  <!-- 턴테이블 본체 -->
+  <div class="deck">
+    <div class="platter">
+      <div class="vinyl" id="vinyl">
+        <div class="label" id="vinylLabel">
+          <div class="spindle"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tonearm-base">
+      <div class="tonearm" id="tonearm">
+        <div class="headshell"></div>
+      </div>
+    </div>
+
+    <div class="power-led">
+      <div class="led-dot" id="ledDot"></div>
+      <span>33 1/3 RPM</span>
+    </div>
+  </div>
+
+  <!-- 유튜브 재생 시 표시되는 미니 프레임 (iOS 터치 승인 필요) -->
+  <div id="yt-wrapper">
+    <div style="font-size:11px; margin-bottom:4px; opacity:0.8;">※ 아이패드 사파리 정책상 유튜브 트랙은 아래 영상 화면을 한 번 터치해야 재생됩니다.</div>
+    <div id="yt-player"></div>
+  </div>
+
+  <!-- 메인 컨트롤러 -->
+  <div class="panel">
+    <div class="now-playing">
+      <div class="track-title" id="trackTitle">재생할 음악을 추가해 주세요</div>
+      <div class="track-source" id="trackSource">로컬 음원 파일 또는 유튜브 링크 지원</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-sub" onclick="prevTrack()">이전 곡</button>
+      <button class="btn" id="playPauseBtn" onclick="togglePlay()">재생 / 일시정지</button>
+      <button class="btn btn-sub" onclick="nextTrack()">다음 곡</button>
+    </div>
+
+    <div class="crackle-box">
+      <span>아날로그 LP 치직거림 효과</span>
+      <input type="range" id="crackleVol" min="0" max="100" value="25" oninput="updateCrackleVolume(this.value)">
+    </div>
+  </div>
+
+  <!-- 음원 추가 및 플레이리스트 -->
+  <div class="panel">
+    <label class="file-label" for="fileInput">
+      + 내 기기에서 음악 파일 불러오기 (MP3, M4A, WAV 등 다중 선택 가능)
+    </label>
+    <input type="file" id="fileInput" accept="audio/*" multiple onchange="handleFiles(this.files)">
+
+    <div class="input-group">
+      <input type="text" id="ytUrlInput" placeholder="유튜브 또는 유튜브 뮤직 링크 붙여넣기">
+      <button class="btn" onclick="addYoutubeTrack()">추가</button>
+    </div>
+
+    <ul class="playlist" id="playlistEl"></ul>
+  </div>
+
+  <audio id="audioPlayer"></audio>
+
   <script>
-    var count = 0;
-    function addCount() {
-      count = count + 1;
-      document.getElementById('num').innerText = count;
+    // 상태 변수 (ES5 호환)
+    var playlist = [];
+    var currentIndex = -1;
+    var isPlaying = false;
+    var audioPlayer = document.getElementById('audioPlayer');
+    var ytPlayer = null;
+    var ytReady = false;
+
+    // Web Audio API (LP 치직거림 노이즈 생성기)
+    var audioCtx = null;
+    var crackleNode = null;
+    var crackleGain = null;
+
+    function initCrackle() {
+      if (audioCtx) return;
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      audioCtx = new AudioContext();
+
+      var bufferSize = 2 * audioCtx.sampleRate;
+      var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      var output = noiseBuffer.getChannelData(0);
+
+      for (var i = 0; i < bufferSize; i++) {
+        var r = Math.random();
+        // 간헐적인 먼지 튐(Pop) + 미세한 표면 마찰음
+        if (r > 0.9985) {
+          output[i] = (Math.random() * 2 - 1) * 0.45;
+        } else {
+          output[i] = (Math.random() * 2 - 1) * 0.015;
+        }
+      }
+
+      crackleNode = audioCtx.createBufferSource();
+      crackleNode.buffer = noiseBuffer;
+      crackleNode.loop = true;
+
+      crackleGain = audioCtx.createGain();
+      var initialVol = document.getElementById('crackleVol').value / 100;
+      crackleGain.gain.value = initialVol * 0.5;
+
+      crackleNode.connect(crackleGain);
+      crackleGain.connect(audioCtx.destination);
+      crackleNode.start(0);
+    }
+
+    function updateCrackleVolume(val) {
+      if (crackleGain) {
+        crackleGain.gain.value = (val / 100) * 0.5;
+      }
+    }
+
+    function setCrackleActive(active) {
+      if (!audioCtx) return;
+      if (audioCtx.state === 'suspended' && active) {
+        audioCtx.resume();
+      }
+      var val = document.getElementById('crackleVol').value / 100;
+      if (crackleGain) {
+        crackleGain.gain.value = active ? (val * 0.5) : 0;
+      }
+    }
+
+    // 테마 변경
+    function setTheme(themeName) {
+      document.body.className = themeName;
+    }
+
+    // 턴테이블 시각 상태 업데이트
+    function updateTurntableUI(playing) {
+      isPlaying = playing;
+      var vinyl = document.getElementById('vinyl');
+      var tonearm = document.getElementById('tonearm');
+      var led = document.getElementById('ledDot');
+
+      if (playing) {
+        vinyl.classList.add('spinning');
+        tonearm.classList.add('playing');
+        led.classList.add('on');
+        setCrackleActive(true);
+      } else {
+        vinyl.classList.remove('spinning');
+        tonearm.classList.remove('playing');
+        led.classList.remove('on');
+        setCrackleActive(false);
+      }
+    }
+
+    // 로컬 파일 추가
+    function handleFiles(files) {
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var url = URL.createObjectURL(file);
+        playlist.push({
+          type: 'local',
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          url: url,
+          thumb: ''
+        });
+      }
+      renderPlaylist();
+      if (currentIndex === -1 && playlist.length > 0) {
+        playTrack(0);
+      }
+    }
+
+    // 유튜브 ID 추출
+    function extractYouTubeID(url) {
+      var regExp = /^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+      var match = url.match(regExp);
+      return (match && match[2].length === 11) ? match[2] : null;
+    }
+
+    // 유튜브 트랙 추가
+    function addYoutubeTrack() {
+      var input = document.getElementById('ytUrlInput');
+      var url = input.value.trim();
+      var videoId = extractYouTubeID(url);
+
+      if (!videoId) {
+        alert('올바른 유튜브 또는 유튜브 뮤직 링크를 입력해 주세요.');
+        return;
+      }
+
+      playlist.push({
+        type: 'youtube',
+        title: 'YouTube Track (' + videoId + ')',
+        videoId: videoId,
+        thumb: 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg'
+      });
+
+      input.value = '';
+      renderPlaylist();
+      if (currentIndex === -1) {
+        playTrack(playlist.length - 1);
+      }
+    }
+
+    // 플레이리스트 화면 렌더링
+    function renderPlaylist() {
+      var ul = document.getElementById('playlistEl');
+      ul.innerHTML = '';
+      for (var i = 0; i < playlist.length; i++) {
+        (function(idx) {
+          var item = playlist[idx];
+          var li = document.createElement('li');
+          if (idx === currentIndex) li.className = 'active';
+          var badgeText = item.type === 'local' ? '내 파일' : 'YouTube';
+          li.innerHTML = '<span>' + (idx + 1) + '. ' + item.title + '</span><span class="badge">' + badgeText + '</span>';
+          li.onclick = function() { playTrack(idx); };
+          ul.appendChild(li);
+        })(i);
+      }
+    }
+
+    // 트랙 재생 실행
+    function playTrack(index) {
+      if (index < 0 || index >= playlist.length) return;
+      initCrackle();
+
+      currentIndex = index;
+      var track = playlist[index];
+      renderPlaylist();
+
+      document.getElementById('trackTitle').innerText = track.title;
+      var labelEl = document.getElementById('vinylLabel');
+
+      if (track.type === 'local') {
+        document.getElementById('trackSource').innerText = '로컬 오디오 파일 재생 중';
+        document.getElementById('yt-wrapper').style.display = 'none';
+        if (ytPlayer && ytReady && ytPlayer.stopVideo) {
+          ytPlayer.stopVideo();
+        }
+        labelEl.style.backgroundImage = 'none';
+
+        audioPlayer.src = track.url;
+        audioPlayer.play();
+        updateTurntableUI(true);
+      } else if (track.type === 'youtube') {
+        document.getElementById('trackSource').innerText = '유튜브 스트리밍 연동';
+        audioPlayer.pause();
+        labelEl.style.backgroundImage = 'url(' + track.thumb + ')';
+
+        document.getElementById('yt-wrapper').style.display = 'block';
+        if (ytReady && ytPlayer) {
+          ytPlayer.loadVideoById(track.videoId);
+          updateTurntableUI(true);
+        }
+      }
+    }
+
+    function togglePlay() {
+      if (currentIndex === -1) {
+        if (playlist.length > 0) playTrack(0);
+        return;
+      }
+      initCrackle();
+      var track = playlist[currentIndex];
+
+      if (track.type === 'local') {
+        if (audioPlayer.paused) {
+          audioPlayer.play();
+          updateTurntableUI(true);
+        } else {
+          audioPlayer.pause();
+          updateTurntableUI(false);
+        }
+      } else if (track.type === 'youtube' && ytReady && ytPlayer) {
+        var state = ytPlayer.getPlayerState();
+        if (state === 1) {
+          ytPlayer.pauseVideo();
+          updateTurntableUI(false);
+        } else {
+          ytPlayer.playVideo();
+          updateTurntableUI(true);
+        }
+      }
+    }
+
+    function nextTrack() {
+      if (playlist.length === 0) return;
+      var next = (currentIndex + 1) % playlist.length;
+      playTrack(next);
+    }
+
+    function prevTrack() {
+      if (playlist.length === 0) return;
+      var prev = (currentIndex - 1 + playlist.length) % playlist.length;
+      playTrack(prev);
+    }
+
+    // 로컬 오디오 종료 시 다음 곡 자동 재생
+    audioPlayer.onended = function() {
+      nextTrack();
+    };
+
+    // YouTube IFrame API 로드
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('yt-player', {
+        height: '160',
+        width: '280',
+        events: {
+          'onReady': function() { ytReady = true; },
+          'onStateChange': function(event) {
+            if (event.data === 1) {
+              updateTurntableUI(true);
+            } else if (event.data === 2) {
+              updateTurntableUI(false);
+            } else if (event.data === 0) {
+              nextTrack();
+            }
+          }
+        }
+      });
     }
   </script>
 </body>
