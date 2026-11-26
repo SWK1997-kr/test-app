@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Vinyl Studio Pro">
-  <title>Analog LP Turntable v2.4</title>
+  <title>Analog LP Turntable v2.6</title>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
@@ -294,23 +294,23 @@
     }
     .panel {
       border-radius: 18px;
-      padding: 18px;
+      padding: 16px 18px;
     }
     .playlist-panel {
       flex: 1;
       display: flex;
       flex-direction: column;
-      min-height: 220px;
+      min-height: 200px;
     }
 
     .now-playing {
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     .track-title {
       font-size: 17px;
       font-weight: bold;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -320,18 +320,54 @@
       opacity: 0.85;
     }
 
+    /* 플레이바 (진행 바 및 시간 표시) */
+    .progress-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .time-text {
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      opacity: 0.85;
+      min-width: 36px;
+      text-align: center;
+    }
+    .seek-slider {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(150, 150, 150, 0.35);
+      outline: none;
+      cursor: pointer;
+    }
+    .seek-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #d97706;
+      border: 2px solid #fff;
+      cursor: pointer;
+    }
+
     .controls {
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 16px;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
     }
     .btn {
-      padding: 11px 18px;
+      padding: 10px 15px;
       border-radius: 10px;
       border: none;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       background: #d97706;
@@ -339,28 +375,43 @@
     }
     .btn:active { opacity: 0.8; }
     .btn-main {
-      padding: 11px 24px;
-      font-size: 15px;
+      padding: 10px 20px;
+      font-size: 14px;
     }
     .btn-sub { background: rgba(120,120,120,0.3); color: inherit; }
+    .btn-repeat {
+      background: rgba(120,120,120,0.25);
+      color: inherit;
+      border: 1px solid rgba(150,150,150,0.35);
+      font-size: 12px;
+      padding: 10px 12px;
+    }
+    .btn-repeat.active {
+      background: rgba(217, 119, 6, 0.3);
+      border-color: #d97706;
+      color: #fbbf24;
+    }
+    body.theme-mint .btn-repeat.active {
+      color: #b45309;
+    }
 
     /* 치직거림 믹서 */
     .crackle-box {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-top: 12px;
+      padding-top: 10px;
       border-top: 1px solid rgba(150,150,150,0.2);
       font-size: 13px;
     }
-    .crackle-box input[type="range"] { width: 135px; }
+    .crackle-box input[type="range"] { width: 130px; }
 
     /* 직관적인 파일 추가 버튼 */
     .add-music-btn {
       display: block;
       width: 100%;
       text-align: center;
-      padding: 13px;
+      padding: 12px;
       border-radius: 10px;
       border: 1.5px solid #d97706;
       background: rgba(217, 119, 6, 0.22);
@@ -368,7 +419,7 @@
       cursor: pointer;
       font-size: 14px;
       font-weight: 700;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       flex-shrink: 0;
     }
     .add-music-btn:active {
@@ -463,7 +514,7 @@
 <body class="theme-wood">
 
   <div class="header">
-    <div class="brand">VINYL STUDIO <span class="ver-tag">v2.4</span></div>
+    <div class="brand">VINYL STUDIO <span class="ver-tag">v2.6</span></div>
     <div class="theme-btns">
       <button onclick="setTheme('theme-wood')">원목</button>
       <button onclick="setTheme('theme-dark')">다크</button>
@@ -515,10 +566,18 @@
           <div class="track-source" id="trackSource">노래 추가 후 재생 버튼을 누르면 시작됩니다</div>
         </div>
 
+        <!-- 플레이바 (현재 시간 / 탐색 슬라이더 / 전체 시간) -->
+        <div class="progress-box">
+          <span class="time-text" id="currentTimeText">00:00</span>
+          <input type="range" class="seek-slider" id="seekSlider" min="0" max="100" value="0" oninput="onSeekInput(this.value)" onchange="onSeekCommit(this.value)">
+          <span class="time-text" id="totalTimeText">00:00</span>
+        </div>
+
         <div class="controls">
           <button class="btn btn-sub" onclick="prevTrack()">이전 곡</button>
           <button class="btn btn-main" id="playPauseBtn" onclick="togglePlay()">재생 / 일시정지</button>
           <button class="btn btn-sub" onclick="nextTrack()">다음 곡</button>
+          <button class="btn btn-repeat" id="repeatBtn" onclick="cycleRepeatMode()">반복 끔</button>
         </div>
 
         <div class="crackle-box">
@@ -548,16 +607,118 @@
 
   </div>
 
-  <audio id="audioPlayer"></audio>
+  <audio id="audioPlayer" preload="auto" playsinline></audio>
 
   <script>
     var playlist = [];
     var currentIndex = -1;
     var isPlaying = false;
     var currentRPM = 33;
+    // 기본값은 'none'(반복 끔) -> 목록이 끝나면 완전히 정지
+    var repeatMode = 'none';
+    var isSeeking = false;
     var audioPlayer = document.getElementById('audioPlayer');
 
-    // IndexedDB 영구 저장소 (백그라운드 비동기 저장)
+    // 시간 포맷 변환 (초 -> MM:SS)
+    function formatTime(sec) {
+      if (!sec || isNaN(sec) || !isFinite(sec)) return '00:00';
+      var m = Math.floor(sec / 60);
+      var s = Math.floor(sec % 60);
+      return (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+    }
+
+    // 반복 모드 전환 ('none' -> 'all' -> 'one')
+    function cycleRepeatMode() {
+      var btn = document.getElementById('repeatBtn');
+      if (repeatMode === 'none') {
+        repeatMode = 'all';
+        btn.innerText = '전체 반복';
+        btn.className = 'btn btn-repeat active';
+      } else if (repeatMode === 'all') {
+        repeatMode = 'one';
+        btn.innerText = '한 곡 반복';
+        btn.className = 'btn btn-repeat active';
+      } else {
+        repeatMode = 'none';
+        btn.innerText = '반복 끔';
+        btn.className = 'btn btn-repeat';
+      }
+      try {
+        localStorage.setItem('vinyl_repeat_mode', repeatMode);
+      } catch (e) {}
+    }
+
+    function applySavedRepeatMode() {
+      try {
+        var saved = localStorage.getItem('vinyl_repeat_mode');
+        if (saved === 'all' || saved === 'one' || saved === 'none') {
+          repeatMode = saved;
+          var btn = document.getElementById('repeatBtn');
+          if (repeatMode === 'all') {
+            btn.innerText = '전체 반복';
+            btn.className = 'btn btn-repeat active';
+          } else if (repeatMode === 'one') {
+            btn.innerText = '한 곡 반복';
+            btn.className = 'btn btn-repeat active';
+          } else {
+            btn.innerText = '반복 끔';
+            btn.className = 'btn btn-repeat';
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 플레이바 탐색 이벤트
+    function onSeekInput(val) {
+      isSeeking = true;
+      if (audioPlayer.duration && !isNaN(audioPlayer.duration)) {
+        var targetSec = (val / 100) * audioPlayer.duration;
+        document.getElementById('currentTimeText').innerText = formatTime(targetSec);
+      }
+    }
+
+    function onSeekCommit(val) {
+      if (audioPlayer.duration && !isNaN(audioPlayer.duration)) {
+        audioPlayer.currentTime = (val / 100) * audioPlayer.duration;
+      }
+      isSeeking = false;
+    }
+
+    audioPlayer.ontimeupdate = function() {
+      if (isSeeking) return;
+      var cur = audioPlayer.currentTime || 0;
+      var dur = audioPlayer.duration || 0;
+      document.getElementById('currentTimeText').innerText = formatTime(cur);
+      if (dur > 0 && isFinite(dur)) {
+        document.getElementById('totalTimeText').innerText = formatTime(dur);
+        document.getElementById('seekSlider').value = Math.floor((cur / dur) * 100);
+      }
+    };
+
+    audioPlayer.onloadedmetadata = function() {
+      var dur = audioPlayer.duration || 0;
+      document.getElementById('totalTimeText').innerText = formatTime(dur);
+      document.getElementById('seekSlider').value = 0;
+      document.getElementById('currentTimeText').innerText = '00:00';
+    };
+
+    // 실제 오디오 이벤트와 UI·효과음을 100% 직결 동기화
+    audioPlayer.onplay = function() {
+      updateTurntableUI(true);
+      document.getElementById('trackSource').innerText = '아날로그 바이닐 엔진 재생 중 (' + currentRPM + ' RPM)';
+    };
+
+    audioPlayer.onpause = function() {
+      // 곡이 끝났을 때 발생하는 자동 pause와 구분해 UI 및 치직거림 즉시 정지
+      updateTurntableUI(false);
+    };
+
+    audioPlayer.onerror = function() {
+      updateTurntableUI(false);
+      document.getElementById('trackSource').innerText = '오디오 재생 오류 - 다음 곡을 선택해 주세요';
+    };
+
+    // IndexedDB 영구 저장소
     var db = null;
     var DB_NAME = 'VinylStudioDB_v3';
     var STORE_NAME = 'tracks';
@@ -642,14 +803,12 @@
       } catch (e) {}
     }
 
-    // 버튼 클릭으로 파일 선택창 직접 열기
     function openFilePicker() {
       var input = document.getElementById('fileInput');
       input.value = '';
       input.click();
     }
 
-    // 파일 선택 즉시 목록에 추가 (DB 저장을 기다리지 않고 100% 즉시 반영)
     function onFilesSelected(inputEl) {
       var files = inputEl.files;
       if (!files || files.length === 0) {
@@ -683,7 +842,7 @@
       inputEl.value = '';
     }
 
-    // Web Audio API (LP 치직거림 노이즈 - 재생 중일 때만 소리 출력)
+    // Web Audio API (LP 치직거림 노이즈)
     var audioCtx = null;
     var crackleNode = null;
     var crackleGain = null;
@@ -721,7 +880,7 @@
 
     function updateCrackleVolume(val) {
       if (crackleGain) {
-        if (isPlaying) {
+        if (isPlaying && !audioPlayer.paused) {
           crackleGain.gain.value = (val / 100) * 0.5;
         } else {
           crackleGain.gain.value = 0;
@@ -749,15 +908,13 @@
       }
     }
 
-    // 홈 화면 웹 앱 이탈 시 오디오 및 치직거림 강제 정지
+    // 백그라운드 이탈 시 즉시 정지
     function forceStopOnBackground() {
-      if (isPlaying || !audioPlayer.paused) {
+      if (!audioPlayer.paused) {
         audioPlayer.pause();
-        updateTurntableUI(false);
         document.getElementById('trackSource').innerText = '일시정지됨 (백그라운드 전환)';
-      } else {
-        setCrackleActive(false);
       }
+      updateTurntableUI(false);
     }
 
     document.addEventListener('visibilitychange', function() {
@@ -812,6 +969,12 @@
       }
     }
 
+    function resetProgressBar() {
+      document.getElementById('seekSlider').value = 0;
+      document.getElementById('currentTimeText').innerText = '00:00';
+      document.getElementById('totalTimeText').innerText = '00:00';
+    }
+
     // 개별 트랙 삭제
     function deleteTrack(idx) {
       var removed = playlist[idx];
@@ -857,7 +1020,9 @@
 
     function stopAllPlayback() {
       audioPlayer.pause();
-      audioPlayer.src = '';
+      audioPlayer.removeAttribute('src');
+      audioPlayer.load();
+      resetProgressBar();
       updateTurntableUI(false);
     }
 
@@ -907,7 +1072,7 @@
       }
     }
 
-    // 트랙 재생 실행 (사용자가 재생 버튼을 누르거나 곡을 클릭했을 때만 실행)
+    // 구형 iOS 사파리 호환 트랙 재생 함수
     function playTrack(index) {
       if (index < 0 || index >= playlist.length) return;
 
@@ -916,12 +1081,24 @@
       renderPlaylist();
 
       document.getElementById('trackTitle').innerText = track.title;
-      document.getElementById('trackSource').innerText = '아날로그 바이닐 엔진 재생 중 (' + currentRPM + ' RPM)';
+      document.getElementById('trackSource').innerText = '트랙 불러오는 중...';
 
+      audioPlayer.pause();
       audioPlayer.src = track.url;
       audioPlayer.playbackRate = (currentRPM === 33) ? 1.0 : 1.25;
-      audioPlayer.play();
-      updateTurntableUI(true);
+      audioPlayer.load();
+
+      var playPromise = audioPlayer.play();
+      if (playPromise !== undefined) {
+        playPromise.then(function() {
+          updateTurntableUI(true);
+        }).catch(function() {
+          // 구형 iOS에서 메타데이터 로드 직후 재시도
+          setTimeout(function() {
+            audioPlayer.play();
+          }, 120);
+        });
+      }
     }
 
     function togglePlay() {
@@ -932,7 +1109,6 @@
       if (audioPlayer.paused) {
         audioPlayer.play();
         updateTurntableUI(true);
-        document.getElementById('trackSource').innerText = '아날로그 바이닐 엔진 재생 중 (' + currentRPM + ' RPM)';
       } else {
         audioPlayer.pause();
         updateTurntableUI(false);
@@ -952,8 +1128,38 @@
       playTrack(prev);
     }
 
+    // 곡 종료 시 다음 곡 전환 및 반복 모드 엄격 처리
     audioPlayer.onended = function() {
-      nextTrack();
+      // 먼저 UI와 치직거림 효과음을 즉시 차단
+      updateTurntableUI(false);
+
+      if (playlist.length === 0) return;
+
+      if (repeatMode === 'one') {
+        // 한 곡 반복: 현재 곡 처음부터 다시 재생
+        setTimeout(function() {
+          audioPlayer.currentTime = 0;
+          audioPlayer.play();
+        }, 150);
+      } else if (repeatMode === 'all') {
+        // 전체 반복: 다음 곡으로 이동 (마지막 곡이면 첫 곡으로 순환)
+        var nextIdx = (currentIndex + 1) % playlist.length;
+        setTimeout(function() {
+          playTrack(nextIdx);
+        }, 150);
+      } else {
+        // 반복 끔('none'): 다음 곡이 있으면 이어서 재생하고, 마지막 곡이면 완전히 정지
+        if (currentIndex + 1 < playlist.length) {
+          var nextSequential = currentIndex + 1;
+          setTimeout(function() {
+            playTrack(nextSequential);
+          }, 150);
+        } else {
+          // 재생목록 전체 종료 -> 완전히 멈춤
+          resetProgressBar();
+          document.getElementById('trackSource').innerText = '재생목록 재생 완료 (정지됨)';
+        }
+      }
     };
 
     window.onload = function() {
@@ -963,6 +1169,7 @@
           document.body.className = savedTheme;
         }
       } catch (e) {}
+      applySavedRepeatMode();
       initDB();
     };
   </script>
