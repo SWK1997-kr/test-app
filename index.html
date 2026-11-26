@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Vinyl Studio Pro">
-  <title>Analog LP Turntable v2.2</title>
+  <title>Analog LP Turntable v2.3</title>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
@@ -355,13 +355,7 @@
     }
     .crackle-box input[type="range"] { width: 135px; }
 
-    /* 로컬 파일 불러오기 (구형 iOS 다중선택 호환) */
-    .file-upload-wrapper {
-      position: relative;
-      width: 100%;
-      margin-bottom: 12px;
-      flex-shrink: 0;
-    }
+    /* 표준 파일 불러오기 버튼 (맥 + 아이패드 100% 호환) */
     .file-label {
       display: block;
       width: 100%;
@@ -369,20 +363,20 @@
       padding: 12px;
       border-radius: 10px;
       border: 1.5px dashed rgba(150,150,150,0.6);
+      background: rgba(217, 119, 6, 0.15);
       cursor: pointer;
       font-size: 13px;
-      font-weight: 600;
+      font-weight: 700;
+      margin-bottom: 12px;
+      flex-shrink: 0;
     }
     .file-label:active { opacity: 0.75; }
-    /* 구형 사파리에서 display:none 대신 투명 오버레이 방식 사용 시 터치 인식률 극대화 */
     #fileInput {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
       opacity: 0;
-      cursor: pointer;
     }
 
     /* 플레이리스트 헤더 및 목록 */
@@ -473,7 +467,7 @@
 <body class="theme-wood">
 
   <div class="header">
-    <div class="brand">VINYL STUDIO <span class="ver-tag">v2.2</span></div>
+    <div class="brand">VINYL STUDIO <span class="ver-tag">v2.3</span></div>
     <div class="theme-btns">
       <button onclick="setTheme('theme-wood')">원목</button>
       <button onclick="setTheme('theme-dark')">다크</button>
@@ -522,7 +516,7 @@
       <div class="panel">
         <div class="now-playing">
           <div class="track-title" id="trackTitle">재생할 음악을 불러와 주세요</div>
-          <div class="track-source" id="trackSource">추가한 음악은 기기에 자동 저장됩니다</div>
+          <div class="track-source" id="trackSource">노래 추가 후 재생 버튼을 누르면 시작됩니다</div>
         </div>
 
         <div class="controls">
@@ -538,11 +532,10 @@
       </div>
 
       <div class="panel playlist-panel">
-        <div class="file-upload-wrapper">
-          <div class="file-label">+ 내 기기에서 음악 파일 불러오기 (다중 선택 지원)</div>
-          <!-- 구형 iOS 사파리 다중 선택 잠금 해제를 위해 accept 제한 제거 후 JS에서 오디오만 필터링 -->
-          <input type="file" id="fileInput" multiple="multiple" onchange="handleFiles(this.files)">
-        </div>
+        <label class="file-label" for="fileInput">
+          + 내 기기에서 음악 파일 불러오기 (맥 다중선택 / 기기 자동저장)
+        </label>
+        <input type="file" id="fileInput" accept="audio/*,.mp3,.m4a,.wav,.flac,.aac" multiple onchange="handleFiles(this.files)">
 
         <div class="playlist-header" id="playlistHeader" style="display:none;">
           <span id="playlistCount">보관함 (0곡)</span>
@@ -550,7 +543,7 @@
         </div>
 
         <div class="empty-guide" id="emptyGuide">
-          저장된 음악이 없습니다.<br>위 버튼을 누르고 파일 앱 우측 상단 '선택'을 눌러 여러 곡을 한 번에 추가하세요.
+          저장된 음악이 없습니다.<br>위 버튼을 눌러 음악을 추가한 뒤 '재생' 버튼을 눌러주세요.
         </div>
 
         <ul class="playlist" id="playlistEl"></ul>
@@ -568,9 +561,9 @@
     var currentRPM = 33;
     var audioPlayer = document.getElementById('audioPlayer');
 
-    // IndexedDB 영구 저장소 설정 (iOS 12 사파리 완벽 호환)
+    // IndexedDB 영구 저장소 설정 (ArrayBuffer 방식으로 맥 + iOS 12 완벽 호환)
     var db = null;
-    var DB_NAME = 'VinylStudioDB';
+    var DB_NAME = 'VinylStudioDB_v2';
     var STORE_NAME = 'tracks';
 
     function initDB(callback) {
@@ -594,7 +587,7 @@
       };
     }
 
-    // 앱 실행 시 저장된 음악 목록 자동 복원
+    // 앱 실행 시 저장된 음악 목록 자동 복원 (자동 재생은 하지 않음)
     function loadSavedTracks(callback) {
       if (!db) return;
       var transaction = db.transaction([STORE_NAME], 'readonly');
@@ -606,7 +599,8 @@
         playlist = [];
         for (var i = 0; i < records.length; i++) {
           var rec = records[i];
-          var blobUrl = URL.createObjectURL(rec.fileBlob);
+          var blob = new Blob([rec.data], { type: rec.mimeType || 'audio/mpeg' });
+          var blobUrl = URL.createObjectURL(blob);
           playlist.push({
             dbId: rec.id,
             title: rec.title,
@@ -616,124 +610,31 @@
         renderPlaylist();
         if (playlist.length > 0) {
           document.getElementById('trackTitle').innerText = playlist[0].title;
-          document.getElementById('trackSource').innerText = '저장된 보관함 불러오기 완료 (' + playlist.length + '곡)';
+          document.getElementById('trackSource').innerText = '보관함 준비 완료 (' + playlist.length + '곡) - 재생 버튼을 눌러주세요';
         }
         if (callback) callback();
       };
     }
 
-    // 새 음원 파일을 IndexedDB에 저장
-    function saveTrackToDB(title, fileBlob, callback) {
+    // 파일을 ArrayBuffer로 변환 후 IndexedDB에 안전하게 저장
+    function saveFileToDB(file, cleanTitle, callback) {
       if (!db) {
         if (callback) callback(null);
         return;
       }
-      try {
-        var transaction = db.transaction([STORE_NAME], 'readwrite');
-        var store = transaction.objectStore(STORE_NAME);
-        var request = store.add({
-          title: title,
-          fileBlob: fileBlob,
-          createdAt: new Date().getTime()
-        });
-
-        request.onsuccess = function(event) {
-          if (callback) callback(event.target.result);
-        };
-        request.onerror = function() {
-          if (callback) callback(null);
-        };
-      } catch (e) {
-        if (callback) callback(null);
-      }
-    }
-
-    // 개별 트랙 DB에서 삭제
-    function deleteTrackFromDB(dbId) {
-      if (!db || !dbId) return;
-      var transaction = db.transaction([STORE_NAME], 'readwrite');
-      var store = transaction.objectStore(STORE_NAME);
-      store.delete(dbId);
-    }
-
-    // 전체 트랙 DB 비우기
-    function clearAllFromDB() {
-      if (!db) return;
-      var transaction = db.transaction([STORE_NAME], 'readwrite');
-      var store = transaction.objectStore(STORE_NAME);
-      store.clear();
-    }
-
-    // Web Audio API (LP 치직거림 노이즈 - 재생 중일 때만 소리 출력)
-    var audioCtx = null;
-    var crackleNode = null;
-    var crackleGain = null;
-
-    function initCrackle() {
-      if (audioCtx) return;
-      var AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      audioCtx = new AudioContext();
-
-      var bufferSize = 2 * audioCtx.sampleRate;
-      var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-      var output = noiseBuffer.getChannelData(0);
-
-      for (var i = 0; i < bufferSize; i++) {
-        var r = Math.random();
-        if (r > 0.9985) {
-          output[i] = (Math.random() * 2 - 1) * 0.45;
-        } else {
-          output[i] = (Math.random() * 2 - 1) * 0.015;
-        }
-      }
-
-      crackleNode = audioCtx.createBufferSource();
-      crackleNode.buffer = noiseBuffer;
-      crackleNode.loop = true;
-
-      crackleGain = audioCtx.createGain();
-      crackleGain.gain.value = 0;
-
-      crackleNode.connect(crackleGain);
-      crackleGain.connect(audioCtx.destination);
-      crackleNode.start(0);
-    }
-
-    function updateCrackleVolume(val) {
-      if (crackleGain) {
-        if (isPlaying) {
-          crackleGain.gain.value = (val / 100) * 0.5;
-        } else {
-          crackleGain.gain.value = 0;
-        }
-      }
-    }
-
-    function setCrackleActive(active) {
-      if (active) {
-        initCrackle();
-      }
-      if (!audioCtx || !crackleGain) return;
-
-      if (active) {
-        if (audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        var val = document.getElementById('crackleVol').value / 100;
-        crackleGain.gain.value = val * 0.5;
-      } else {
-        crackleGain.gain.value = 0;
-      }
-    }
-
-    // 테마 변경 및 기억
-    function setTheme(themeName) {
-      document.body.className = themeName;
-      try {
-        localStorage.setItem('vinyl_theme', themeName);
-      } catch (e) {}
-    }
-
-    // 33 / 45 RPM 속도 변경
-    function set
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          var arrayBuffer = e.target.result;
+          var transaction = db.transaction([STORE_NAME], 'readwrite');
+          var store = transaction.objectStore(STORE_NAME);
+          var request = store.add({
+            title: cleanTitle,
+            mimeType: file.type || 'audio/mpeg',
+            data: arrayBuffer,
+            createdAt: new Date().getTime()
+          });
+          request.onsuccess = function(ev) {
+            if (callback) callback(ev.target.result);
+          };
+          request.onerror = function() {
