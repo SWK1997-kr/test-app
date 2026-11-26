@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Vinyl Studio Pro">
-  <title>Analog LP Turntable v2.0</title>
+  <title>Analog LP Turntable v2.2</title>
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
@@ -355,7 +355,13 @@
     }
     .crackle-box input[type="range"] { width: 135px; }
 
-    /* 로컬 파일 불러오기 */
+    /* 로컬 파일 불러오기 (구형 iOS 다중선택 호환) */
+    .file-upload-wrapper {
+      position: relative;
+      width: 100%;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+    }
     .file-label {
       display: block;
       width: 100%;
@@ -366,11 +372,18 @@
       cursor: pointer;
       font-size: 13px;
       font-weight: 600;
-      margin-bottom: 12px;
-      flex-shrink: 0;
     }
     .file-label:active { opacity: 0.75; }
-    #fileInput { display: none; }
+    /* 구형 사파리에서 display:none 대신 투명 오버레이 방식 사용 시 터치 인식률 극대화 */
+    #fileInput {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
 
     /* 플레이리스트 헤더 및 목록 */
     .playlist-header {
@@ -441,9 +454,10 @@
     .empty-guide {
       text-align: center;
       font-size: 12px;
-      opacity: 0.6;
+      opacity: 0.65;
       margin: auto 0;
       padding: 20px 0;
+      line-height: 1.6;
     }
 
     /* 세로 모드 또는 모바일 화면 대응 */
@@ -459,7 +473,7 @@
 <body class="theme-wood">
 
   <div class="header">
-    <div class="brand">VINYL STUDIO <span class="ver-tag">v2.0</span></div>
+    <div class="brand">VINYL STUDIO <span class="ver-tag">v2.2</span></div>
     <div class="theme-btns">
       <button onclick="setTheme('theme-wood')">원목</button>
       <button onclick="setTheme('theme-dark')">다크</button>
@@ -503,12 +517,12 @@
       </div>
     </div>
 
-    <!-- 우측: 컨트롤러 및 재생목록 -->
+    <!-- 우측: 컨트롤러 및 영구 저장 재생목록 -->
     <div class="right-col">
       <div class="panel">
         <div class="now-playing">
           <div class="track-title" id="trackTitle">재생할 음악을 불러와 주세요</div>
-          <div class="track-source" id="trackSource">MP3 · M4A · WAV · FLAC 로컬 음원 전용</div>
+          <div class="track-source" id="trackSource">추가한 음악은 기기에 자동 저장됩니다</div>
         </div>
 
         <div class="controls">
@@ -524,18 +538,19 @@
       </div>
 
       <div class="panel playlist-panel">
-        <label class="file-label" for="fileInput">
-          + 내 기기에서 음악 파일 불러오기 (다중 선택 가능)
-        </label>
-        <input type="file" id="fileInput" accept="audio/*" multiple onchange="handleFiles(this.files)">
+        <div class="file-upload-wrapper">
+          <div class="file-label">+ 내 기기에서 음악 파일 불러오기 (다중 선택 지원)</div>
+          <!-- 구형 iOS 사파리 다중 선택 잠금 해제를 위해 accept 제한 제거 후 JS에서 오디오만 필터링 -->
+          <input type="file" id="fileInput" multiple="multiple" onchange="handleFiles(this.files)">
+        </div>
 
         <div class="playlist-header" id="playlistHeader" style="display:none;">
-          <span id="playlistCount">재생목록 (0곡)</span>
+          <span id="playlistCount">보관함 (0곡)</span>
           <button type="button" class="clear-all-btn" onclick="clearAllTracks()">전체 삭제</button>
         </div>
 
         <div class="empty-guide" id="emptyGuide">
-          불러온 음악 파일이 여기에 표시됩니다.
+          저장된 음악이 없습니다.<br>위 버튼을 누르고 파일 앱 우측 상단 '선택'을 눌러 여러 곡을 한 번에 추가하세요.
         </div>
 
         <ul class="playlist" id="playlistEl"></ul>
@@ -552,6 +567,102 @@
     var isPlaying = false;
     var currentRPM = 33;
     var audioPlayer = document.getElementById('audioPlayer');
+
+    // IndexedDB 영구 저장소 설정 (iOS 12 사파리 완벽 호환)
+    var db = null;
+    var DB_NAME = 'VinylStudioDB';
+    var STORE_NAME = 'tracks';
+
+    function initDB(callback) {
+      if (!window.indexedDB) {
+        if (callback) callback();
+        return;
+      }
+      var request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = function(event) {
+        var database = event.target.result;
+        if (!database.objectStoreNames.contains(STORE_NAME)) {
+          database.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+        }
+      };
+      request.onsuccess = function(event) {
+        db = event.target.result;
+        loadSavedTracks(callback);
+      };
+      request.onerror = function() {
+        if (callback) callback();
+      };
+    }
+
+    // 앱 실행 시 저장된 음악 목록 자동 복원
+    function loadSavedTracks(callback) {
+      if (!db) return;
+      var transaction = db.transaction([STORE_NAME], 'readonly');
+      var store = transaction.objectStore(STORE_NAME);
+      var request = store.getAll();
+
+      request.onsuccess = function(event) {
+        var records = event.target.result || [];
+        playlist = [];
+        for (var i = 0; i < records.length; i++) {
+          var rec = records[i];
+          var blobUrl = URL.createObjectURL(rec.fileBlob);
+          playlist.push({
+            dbId: rec.id,
+            title: rec.title,
+            url: blobUrl
+          });
+        }
+        renderPlaylist();
+        if (playlist.length > 0) {
+          document.getElementById('trackTitle').innerText = playlist[0].title;
+          document.getElementById('trackSource').innerText = '저장된 보관함 불러오기 완료 (' + playlist.length + '곡)';
+        }
+        if (callback) callback();
+      };
+    }
+
+    // 새 음원 파일을 IndexedDB에 저장
+    function saveTrackToDB(title, fileBlob, callback) {
+      if (!db) {
+        if (callback) callback(null);
+        return;
+      }
+      try {
+        var transaction = db.transaction([STORE_NAME], 'readwrite');
+        var store = transaction.objectStore(STORE_NAME);
+        var request = store.add({
+          title: title,
+          fileBlob: fileBlob,
+          createdAt: new Date().getTime()
+        });
+
+        request.onsuccess = function(event) {
+          if (callback) callback(event.target.result);
+        };
+        request.onerror = function() {
+          if (callback) callback(null);
+        };
+      } catch (e) {
+        if (callback) callback(null);
+      }
+    }
+
+    // 개별 트랙 DB에서 삭제
+    function deleteTrackFromDB(dbId) {
+      if (!db || !dbId) return;
+      var transaction = db.transaction([STORE_NAME], 'readwrite');
+      var store = transaction.objectStore(STORE_NAME);
+      store.delete(dbId);
+    }
+
+    // 전체 트랙 DB 비우기
+    function clearAllFromDB() {
+      if (!db) return;
+      var transaction = db.transaction([STORE_NAME], 'readwrite');
+      var store = transaction.objectStore(STORE_NAME);
+      store.clear();
+    }
 
     // Web Audio API (LP 치직거림 노이즈 - 재생 중일 때만 소리 출력)
     var audioCtx = null;
@@ -616,207 +727,13 @@
       }
     }
 
-    // 테마 변경
+    // 테마 변경 및 기억
     function setTheme(themeName) {
       document.body.className = themeName;
+      try {
+        localStorage.setItem('vinyl_theme', themeName);
+      } catch (e) {}
     }
 
     // 33 / 45 RPM 속도 변경
-    function setRPM(rpm) {
-      currentRPM = rpm;
-      document.getElementById('rpmLabel').innerText = (rpm === 33) ? '33 1/3 RPM' : '45 RPM';
-      document.getElementById('btn33').className = (rpm === 33) ? 'rpm-btn active' : 'rpm-btn';
-      document.getElementById('btn45').className = (rpm === 45) ? 'rpm-btn active' : 'rpm-btn';
-
-      var rate = (rpm === 33) ? 1.0 : 1.25;
-      audioPlayer.playbackRate = rate;
-
-      if (isPlaying) {
-        updateTurntableUI(true);
-      }
-    }
-
-    // 턴테이블 시각 상태 및 치직거림 동기화
-    function updateTurntableUI(playing) {
-      isPlaying = playing;
-      var vinyl = document.getElementById('vinyl');
-      var tonearm = document.getElementById('tonearm');
-      var led = document.getElementById('ledDot');
-
-      vinyl.classList.remove('spinning-33');
-      vinyl.classList.remove('spinning-45');
-
-      if (playing) {
-        vinyl.classList.add(currentRPM === 33 ? 'spinning-33' : 'spinning-45');
-        tonearm.classList.add('playing');
-        led.classList.add('on');
-        setCrackleActive(true);
-      } else {
-        tonearm.classList.remove('playing');
-        led.classList.remove('on');
-        setCrackleActive(false);
-      }
-    }
-
-    // 로컬 파일 추가
-    function handleFiles(files) {
-      for (var i = 0; i < files.length; i++) {
-        var file = files[i];
-        var url = URL.createObjectURL(file);
-        playlist.push({
-          title: file.name.replace(/\.[^/.]+$/, ""),
-          url: url
-        });
-      }
-      document.getElementById('fileInput').value = '';
-      renderPlaylist();
-      if (currentIndex === -1 && playlist.length > 0) {
-        playTrack(0);
-      }
-    }
-
-    // 개별 트랙 삭제
-    function deleteTrack(idx) {
-      var removed = playlist[idx];
-      if (removed && removed.url) {
-        URL.revokeObjectURL(removed.url);
-      }
-
-      playlist.splice(idx, 1);
-
-      if (playlist.length === 0) {
-        stopAllPlayback();
-        currentIndex = -1;
-        document.getElementById('trackTitle').innerText = '재생할 음악을 불러와 주세요';
-        document.getElementById('trackSource').innerText = 'MP3 · M4A · WAV · FLAC 로컬 음원 전용';
-      } else if (idx === currentIndex) {
-        stopAllPlayback();
-        currentIndex = -1;
-        document.getElementById('trackTitle').innerText = '트랙이 삭제되었습니다 (곡을 선택해 주세요)';
-        document.getElementById('trackSource').innerText = '대기 중';
-      } else if (idx < currentIndex) {
-        currentIndex = currentIndex - 1;
-      }
-
-      renderPlaylist();
-    }
-
-    // 전체 트랙 삭제
-    function clearAllTracks() {
-      for (var i = 0; i < playlist.length; i++) {
-        if (playlist[i].url) {
-          URL.revokeObjectURL(playlist[i].url);
-        }
-      }
-      playlist = [];
-      currentIndex = -1;
-      stopAllPlayback();
-      document.getElementById('trackTitle').innerText = '재생할 음악을 불러와 주세요';
-      document.getElementById('trackSource').innerText = 'MP3 · M4A · WAV · FLAC 로컬 음원 전용';
-      renderPlaylist();
-    }
-
-    // 오디오 재생 정지
-    function stopAllPlayback() {
-      audioPlayer.pause();
-      audioPlayer.src = '';
-      updateTurntableUI(false);
-    }
-
-    // 플레이리스트 렌더링
-    function renderPlaylist() {
-      var ul = document.getElementById('playlistEl');
-      var header = document.getElementById('playlistHeader');
-      var countEl = document.getElementById('playlistCount');
-      var emptyGuide = document.getElementById('emptyGuide');
-
-      ul.innerHTML = '';
-      if (playlist.length === 0) {
-        header.style.display = 'none';
-        emptyGuide.style.display = 'block';
-        return;
-      }
-
-      header.style.display = 'flex';
-      emptyGuide.style.display = 'none';
-      countEl.innerText = '재생목록 (' + playlist.length + '곡)';
-
-      for (var i = 0; i < playlist.length; i++) {
-        (function(idx) {
-          var item = playlist[idx];
-          var li = document.createElement('li');
-          if (idx === currentIndex) li.className = 'active';
-
-          var titleDiv = document.createElement('div');
-          titleDiv.className = 'track-select-area';
-          titleDiv.innerText = (idx + 1) + '. ' + item.title;
-          titleDiv.onclick = function() {
-            playTrack(idx);
-          };
-
-          var delBtn = document.createElement('button');
-          delBtn.type = 'button';
-          delBtn.className = 'del-btn';
-          delBtn.innerText = '삭제';
-          delBtn.onclick = function() {
-            deleteTrack(idx);
-          };
-
-          li.appendChild(titleDiv);
-          li.appendChild(delBtn);
-          ul.appendChild(li);
-        })(i);
-      }
-    }
-
-    // 트랙 재생 실행
-    function playTrack(index) {
-      if (index < 0 || index >= playlist.length) return;
-
-      currentIndex = index;
-      var track = playlist[index];
-      renderPlaylist();
-
-      document.getElementById('trackTitle').innerText = track.title;
-      document.getElementById('trackSource').innerText = '아날로그 바이닐 엔진 재생 중 (' + currentRPM + ' RPM)';
-
-      audioPlayer.src = track.url;
-      audioPlayer.playbackRate = (currentRPM === 33) ? 1.0 : 1.25;
-      audioPlayer.play();
-      updateTurntableUI(true);
-    }
-
-    function togglePlay() {
-      if (currentIndex === -1) {
-        if (playlist.length > 0) playTrack(0);
-        return;
-      }
-      if (audioPlayer.paused) {
-        audioPlayer.play();
-        updateTurntableUI(true);
-        document.getElementById('trackSource').innerText = '아날로그 바이닐 엔진 재생 중 (' + currentRPM + ' RPM)';
-      } else {
-        audioPlayer.pause();
-        updateTurntableUI(false);
-        document.getElementById('trackSource').innerText = '일시정지됨';
-      }
-    }
-
-    function nextTrack() {
-      if (playlist.length === 0) return;
-      var next = (currentIndex + 1) % playlist.length;
-      playTrack(next);
-    }
-
-    function prevTrack() {
-      if (playlist.length === 0) return;
-      var prev = (currentIndex - 1 + playlist.length) % playlist.length;
-      playTrack(prev);
-    }
-
-    audioPlayer.onended = function() {
-      nextTrack();
-    };
-  </script>
-</body>
-</html>
+    function set
