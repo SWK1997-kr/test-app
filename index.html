@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <!-- 아이패드 홈 화면 추가 시 전체 화면 앱처럼 실행 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="내 첫 웹앱">
+  <title>아이패드 호환 테스트 웹앱</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      color: #222;
+    }
+    .card {
+      background: #ffffff;
+      max-width: 480px;
+      margin: 40px auto;
+      padding: 30px 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    h1 { font-size: 22px; margin-bottom: 10px; }
+    p { font-size: 15px; color: #555; line-height: 1.5; }
+    .count { font-size: 48px; font-weight: bold; color: #007aff; margin: 20px 0; }
+    button {
+      background-color: #007aff;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 17px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    button:active { background-color: #005bb5; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>테스트 웹 앱 연결 성공!</h1>
+    <p>이 화면이 아이패드 에어 1에서 보인다면<br>구형 iOS 호환 및 배포가 완벽히 성공한 것입니다.</p>
+    <div class="count" id="num">0</div>
+    <button onclick="addCount()">버튼 터치 테스트 (+1)</button>
+  </div>
+
+  <script>
+    var count = 0;
+    function addCount() {
+      count = count + 1;
+      document.getElementById('num').innerText = count;
+    }
+  </script>
+</body>
+</html>
