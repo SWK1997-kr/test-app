@@ -279,3 +279,704 @@
       padding: 10px 18px;
       border-radius: 10px;
       border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #d97706;
+      color: #fff;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-sub { background: rgba(120,120,120,0.3); color: inherit; }
+
+    /* 치직거림 믹서 */
+    .crackle-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 10px;
+      border-top: 1px solid rgba(150,150,150,0.2);
+      font-size: 13px;
+    }
+    .crackle-box input[type="range"] { width: 140px; }
+
+    /* 음원 추가 영역 */
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .input-group input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(150,150,150,0.4);
+      font-size: 14px;
+      background: rgba(255,255,255,0.95);
+      color: #111;
+    }
+    .file-label {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px dashed rgba(150,150,150,0.6);
+      cursor: pointer;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    #fileInput { display: none; }
+
+    /* 플레이리스트 헤더 및 목록 */
+    .playlist-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      padding: 0 2px;
+      font-size: 12px;
+      opacity: 0.85;
+    }
+    .clear-all-btn {
+      background: transparent;
+      border: 1px solid rgba(150,150,150,0.4);
+      color: inherit;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .clear-all-btn:active { opacity: 0.7; }
+
+    .playlist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .playlist li {
+      padding: 9px 10px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: rgba(120,120,120,0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .playlist li.active {
+      background: #d97706;
+      color: #fff;
+      font-weight: bold;
+    }
+    .track-item-left {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-right: 8px;
+    }
+    .track-item-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.3);
+      white-space: nowrap;
+    }
+    .del-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 5px;
+      border: none;
+      background: rgba(0,0,0,0.35);
+      color: #fff;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    body.theme-mint .del-btn {
+      background: rgba(0,0,0,0.15);
+      color: #1e293b;
+    }
+    .playlist li.active .del-btn {
+      background: rgba(0,0,0,0.35);
+      color: #fff;
+    }
+    .del-btn:active {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    /* 유튜브 백그라운드 숨김 처리 */
+    #yt-hidden-container {
+      position: fixed;
+      top: -500px;
+      left: -500px;
+      width: 240px;
+      height: 150px;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body class="theme-wood">
+
+  <div class="header">
+    <div class="brand">VINYL STUDIO PRO</div>
+    <div class="theme-btns">
+      <button onclick="setTheme('theme-wood')">원목</button>
+      <button onclick="setTheme('theme-dark')">다크</button>
+      <button onclick="setTheme('theme-mint')">민트</button>
+    </div>
+  </div>
+
+  <!-- 턴테이블 본체 -->
+  <div class="deck">
+    <div class="platter">
+      <div class="vinyl-sheen"></div>
+      <div class="vinyl" id="vinyl">
+        <div class="label" id="vinylLabel">
+          <div class="spindle"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tonearm-base">
+      <div class="tonearm" id="tonearm">
+        <div class="tonearm-weight"></div>
+        <div class="headshell"></div>
+      </div>
+    </div>
+
+    <div class="deck-bottom-left">
+      <div class="power-led">
+        <div class="led-dot" id="ledDot"></div>
+        <span id="rpmLabel">33 1/3 RPM</span>
+      </div>
+      <div class="rpm-switch">
+        <button class="rpm-btn active" id="btn33" onclick="setRPM(33)">33 RPM</button>
+        <button class="rpm-btn" id="btn45" onclick="setRPM(45)">45 RPM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 화면에서 보이지 않게 처리된 유튜브 백그라운드 플레이어 -->
+  <div id="yt-hidden-container">
+    <div id="yt-player"></div>
+  </div>
+
+  <!-- 메인 컨트롤러 -->
+  <div class="panel">
+    <div class="now-playing">
+      <div class="track-title" id="trackTitle">재생할 음악을 추가해 주세요</div>
+      <div class="track-source" id="trackSource">로컬 파일 · 유튜브 곡 · 유튜브 뮤직 재생목록 지원</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-sub" onclick="prevTrack()">이전 곡</button>
+      <button class="btn" id="playPauseBtn" onclick="togglePlay()">재생 / 일시정지</button>
+      <button class="btn btn-sub" onclick="nextTrack()">다음 곡</button>
+    </div>
+
+    <div class="crackle-box">
+      <span>아날로그 LP 치직거림 효과 (재생 시 작동)</span>
+      <input type="range" id="crackleVol" min="0" max="100" value="25" oninput="updateCrackleVolume(this.value)">
+    </div>
+  </div>
+
+  <!-- 음원 추가 및 플레이리스트 -->
+  <div class="panel">
+    <label class="file-label" for="fileInput">
+      + 내 기기에서 음악 파일 불러오기 (MP3, M4A, WAV 등 다중 선택)
+    </label>
+    <input type="file" id="fileInput" accept="audio/*" multiple onchange="handleFiles(this.files)">
+
+    <div class="input-group">
+      <input type="text" id="ytUrlInput" placeholder="유튜브 / 유튜브 뮤직 곡 또는 재생목록(list=) 링크">
+      <button class="btn" onclick="addYoutubeLink()">추가</button>
+    </div>
+
+    <div class="playlist-header" id="playlistHeader" style="display:none;">
+      <span id="playlistCount">총 0곡</span>
+      <button class="clear-all-btn" onclick="clearAllTracks()">전체 삭제</button>
+    </div>
+
+    <ul class="playlist" id="playlistEl"></ul>
+  </div>
+
+  <audio id="audioPlayer"></audio>
+
+  <script>
+    var playlist = [];
+    var currentIndex = -1;
+    var isPlaying = false;
+    var currentRPM = 33;
+    var audioPlayer = document.getElementById('audioPlayer');
+    var ytPlayer = null;
+    var ytReady = false;
+    var pendingTrack = null;
+
+    // Web Audio API (LP 치직거림 노이즈 - 재생 중일 때만 소리 출력)
+    var audioCtx = null;
+    var crackleNode = null;
+    var crackleGain = null;
+
+    function initCrackle() {
+      if (audioCtx) return;
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      audioCtx = new AudioContext();
+
+      var bufferSize = 2 * audioCtx.sampleRate;
+      var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      var output = noiseBuffer.getChannelData(0);
+
+      for (var i = 0; i < bufferSize; i++) {
+        var r = Math.random();
+        if (r > 0.9985) {
+          output[i] = (Math.random() * 2 - 1) * 0.45;
+        } else {
+          output[i] = (Math.random() * 2 - 1) * 0.015;
+        }
+      }
+
+      crackleNode = audioCtx.createBufferSource();
+      crackleNode.buffer = noiseBuffer;
+      crackleNode.loop = true;
+
+      crackleGain = audioCtx.createGain();
+      crackleGain.gain.value = 0;
+
+      crackleNode.connect(crackleGain);
+      crackleGain.connect(audioCtx.destination);
+      crackleNode.start(0);
+    }
+
+    function updateCrackleVolume(val) {
+      if (crackleGain) {
+        if (isPlaying) {
+          crackleGain.gain.value = (val / 100) * 0.5;
+        } else {
+          crackleGain.gain.value = 0;
+        }
+      }
+    }
+
+    function setCrackleActive(active) {
+      if (active) {
+        initCrackle();
+      }
+      if (!audioCtx || !crackleGain) return;
+
+      if (active) {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        var val = document.getElementById('crackleVol').value / 100;
+        crackleGain.gain.value = val * 0.5;
+      } else {
+        crackleGain.gain.value = 0;
+      }
+    }
+
+    // 테마 변경
+    function setTheme(themeName) {
+      document.body.className = themeName;
+    }
+
+    // 33 / 45 RPM 속도 변경
+    function setRPM(rpm) {
+      currentRPM = rpm;
+      document.getElementById('rpmLabel').innerText = (rpm === 33) ? '33 1/3 RPM' : '45 RPM';
+      document.getElementById('btn33').className = (rpm === 33) ? 'rpm-btn active' : 'rpm-btn';
+      document.getElementById('btn45').className = (rpm === 45) ? 'rpm-btn active' : 'rpm-btn';
+
+      var rate = (rpm === 33) ? 1.0 : 1.25;
+      audioPlayer.playbackRate = rate;
+      if (ytReady && ytPlayer && ytPlayer.setPlaybackRate) {
+        ytPlayer.setPlaybackRate(rate);
+      }
+
+      if (isPlaying) {
+        updateTurntableUI(true);
+      }
+    }
+
+    // 턴테이블 시각 상태 및 치직거림 동기화
+    function updateTurntableUI(playing) {
+      isPlaying = playing;
+      var vinyl = document.getElementById('vinyl');
+      var tonearm = document.getElementById('tonearm');
+      var led = document.getElementById('ledDot');
+
+      vinyl.classList.remove('spinning-33');
+      vinyl.classList.remove('spinning-45');
+
+      if (playing) {
+        vinyl.classList.add(currentRPM === 33 ? 'spinning-33' : 'spinning-45');
+        tonearm.classList.add('playing');
+        led.classList.add('on');
+        setCrackleActive(true);
+      } else {
+        tonearm.classList.remove('playing');
+        led.classList.remove('on');
+        setCrackleActive(false);
+      }
+    }
+
+    // 로컬 파일 추가
+    function handleFiles(files) {
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var url = URL.createObjectURL(file);
+        playlist.push({
+          type: 'local',
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          url: url,
+          thumb: ''
+        });
+      }
+      document.getElementById('fileInput').value = '';
+      renderPlaylist();
+      if (currentIndex === -1 && playlist.length > 0) {
+        playTrack(0);
+      }
+    }
+
+    // 유튜브 URL 정밀 파싱
+    function parseYouTubeUrl(url) {
+      var listMatch = url.match(/[?&]list=([^#\&\?]+)/);
+      var vidMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/)|music\.youtube\.com\/watch\?v=)([^#\&\?]{11})/);
+      var videoId = vidMatch ? vidMatch[1] : null;
+      var listId = listMatch ? listMatch[1] : null;
+      return { videoId: videoId, listId: listId };
+    }
+
+    // 유튜브 곡 또는 재생목록 추가
+    function addYoutubeLink() {
+      var input = document.getElementById('ytUrlInput');
+      var url = input.value.trim();
+      var parsed = parseYouTubeUrl(url);
+
+      if (!parsed.videoId && !parsed.listId) {
+        alert('올바른 유튜브 또는 유튜브 뮤직 링크를 입력해 주세요.');
+        return;
+      }
+
+      if (parsed.listId && !parsed.videoId) {
+        playlist.push({
+          type: 'yt_playlist',
+          title: 'YouTube 재생목록 (' + parsed.listId.substring(0, 8) + '...)',
+          listId: parsed.listId,
+          thumb: ''
+        });
+      } else if (parsed.listId && parsed.videoId) {
+        playlist.push({
+          type: 'yt_playlist',
+          title: 'YouTube 재생목록 스트리밍',
+          listId: parsed.listId,
+          videoId: parsed.videoId,
+          thumb: 'https://img.youtube.com/vi/' + parsed.videoId + '/hqdefault.jpg'
+        });
+      } else {
+        playlist.push({
+          type: 'youtube',
+          title: 'YouTube 트랙 (' + parsed.videoId + ')',
+          videoId: parsed.videoId,
+          thumb: 'https://img.youtube.com/vi/' + parsed.videoId + '/hqdefault.jpg'
+        });
+      }
+
+      input.value = '';
+      renderPlaylist();
+      if (currentIndex === -1) {
+        playTrack(playlist.length - 1);
+      }
+    }
+
+    // 개별 트랙 삭제
+    function deleteTrack(idx, event) {
+      if (event && event.stopPropagation) {
+        event.stopPropagation();
+      }
+      var removed = playlist[idx];
+      if (removed && removed.type === 'local' && removed.url) {
+        URL.revokeObjectURL(removed.url);
+      }
+
+      playlist.splice(idx, 1);
+
+      if (playlist.length === 0) {
+        stopAllPlayback();
+        currentIndex = -1;
+        document.getElementById('trackTitle').innerText = '재생할 음악을 추가해 주세요';
+        document.getElementById('trackSource').innerText = '로컬 파일 · 유튜브 곡 · 유튜브 뮤직 재생목록 지원';
+        document.getElementById('vinylLabel').style.backgroundImage = 'none';
+      } else if (idx === currentIndex) {
+        stopAllPlayback();
+        currentIndex = -1;
+        document.getElementById('trackTitle').innerText = '트랙이 삭제되었습니다 (곡을 선택해 주세요)';
+        document.getElementById('trackSource').innerText = '대기 중';
+        document.getElementById('vinylLabel').style.backgroundImage = 'none';
+      } else if (idx < currentIndex) {
+        currentIndex = currentIndex - 1;
+      }
+
+      renderPlaylist();
+    }
+
+    // 전체 트랙 삭제
+    function clearAllTracks() {
+      for (var i = 0; i < playlist.length; i++) {
+        if (playlist[i].type === 'local' && playlist[i].url) {
+          URL.revokeObjectURL(playlist[i].url);
+        }
+      }
+      playlist = [];
+      currentIndex = -1;
+      stopAllPlayback();
+      document.getElementById('trackTitle').innerText = '재생할 음악을 추가해 주세요';
+      document.getElementById('trackSource').innerText = '로컬 파일 · 유튜브 곡 · 유튜브 뮤직 재생목록 지원';
+      document.getElementById('vinylLabel').style.backgroundImage = 'none';
+      renderPlaylist();
+    }
+
+    // 모든 오디오 재생 정지
+    function stopAllPlayback() {
+      audioPlayer.pause();
+      audioPlayer.src = '';
+      if (ytPlayer && ytReady && ytPlayer.stopVideo) {
+        ytPlayer.stopVideo();
+      }
+      updateTurntableUI(false);
+    }
+
+    // 플레이리스트 렌더링
+    function renderPlaylist() {
+      var ul = document.getElementById('playlistEl');
+      var header = document.getElementById('playlistHeader');
+      var countEl = document.getElementById('playlistCount');
+
+      ul.innerHTML = '';
+      if (playlist.length === 0) {
+        header.style.display = 'none';
+        return;
+      }
+
+      header.style.display = 'flex';
+      countEl.innerText = '재생목록 (' + playlist.length + '곡)';
+
+      for (var i = 0; i < playlist.length; i++) {
+        (function(idx) {
+          var item = playlist[idx];
+          var li = document.createElement('li');
+          if (idx === currentIndex) li.className = 'active';
+
+          var badgeText = '내 파일';
+          if (item.type === 'youtube') badgeText = 'YT 곡';
+          if (item.type === 'yt_playlist') badgeText = 'YT 재생목록';
+
+          var leftSpan = document.createElement('span');
+          leftSpan.className = 'track-item-left';
+          leftSpan.innerText = (idx + 1) + '. ' + item.title;
+
+          var rightDiv = document.createElement('div');
+          rightDiv.className = 'track-item-right';
+
+          var badgeSpan = document.createElement('span');
+          badgeSpan.className = 'badge';
+          badgeSpan.innerText = badgeText;
+
+          var delBtn = document.createElement('button');
+          delBtn.className = 'del-btn';
+          delBtn.title = '삭제';
+          delBtn.innerText = '×';
+          delBtn.onclick = function(e) {
+            deleteTrack(idx, e);
+          };
+
+          rightDiv.appendChild(badgeSpan);
+          rightDiv.appendChild(delBtn);
+
+          li.appendChild(leftSpan);
+          li.appendChild(rightDiv);
+
+          li.onclick = function() { playTrack(idx); };
+          ul.appendChild(li);
+        })(i);
+      }
+    }
+
+    // 유튜브 백그라운드 트랙 로드
+    function loadYouTubeTrack(track) {
+      document.getElementById('trackSource').innerText = '유튜브 오디오 연결 중... (소리가 안 나면 재생 버튼을 눌러주세요)';
+
+      if (!ytReady || !ytPlayer) {
+        pendingTrack = track;
+        return;
+      }
+
+      if (track.type === 'youtube') {
+        ytPlayer.loadVideoById(track.videoId);
+      } else if (track.type === 'yt_playlist') {
+        ytPlayer.loadPlaylist({
+          list: track.listId,
+          listType: 'playlist'
+        });
+      }
+    }
+
+    // 트랙 재생 실행
+    function playTrack(index) {
+      if (index < 0 || index >= playlist.length) return;
+
+      currentIndex = index;
+      var track = playlist[index];
+      renderPlaylist();
+
+      document.getElementById('trackTitle').innerText = track.title;
+      var labelEl = document.getElementById('vinylLabel');
+
+      if (track.type === 'local') {
+        document.getElementById('trackSource').innerText = '로컬 오디오 파일 재생 중';
+        if (ytPlayer && ytReady && ytPlayer.stopVideo) {
+          ytPlayer.stopVideo();
+        }
+        labelEl.style.backgroundImage = 'none';
+
+        audioPlayer.src = track.url;
+        audioPlayer.playbackRate = (currentRPM === 33) ? 1.0 : 1.25;
+        audioPlayer.play();
+        updateTurntableUI(true);
+      } else if (track.type === 'youtube' || track.type === 'yt_playlist') {
+        audioPlayer.pause();
+        updateTurntableUI(false);
+        labelEl.style.backgroundImage = track.thumb ? ('url(' + track.thumb + ')') : 'none';
+        loadYouTubeTrack(track);
+      }
+    }
+
+    function togglePlay() {
+      if (currentIndex === -1) {
+        if (playlist.length > 0) playTrack(0);
+        return;
+      }
+      var track = playlist[currentIndex];
+
+      if (track.type === 'local') {
+        if (audioPlayer.paused) {
+          audioPlayer.play();
+          updateTurntableUI(true);
+        } else {
+          audioPlayer.pause();
+          updateTurntableUI(false);
+        }
+      } else if ((track.type === 'youtube' || track.type === 'yt_playlist') && ytReady && ytPlayer) {
+        var state = ytPlayer.getPlayerState();
+        if (state === 1) {
+          ytPlayer.pauseVideo();
+          updateTurntableUI(false);
+        } else {
+          ytPlayer.playVideo();
+        }
+      }
+    }
+
+    function nextTrack() {
+      if (playlist.length === 0) return;
+      var track = playlist[currentIndex];
+      if (track && track.type === 'yt_playlist' && ytReady && ytPlayer && ytPlayer.nextVideo) {
+        ytPlayer.nextVideo();
+        return;
+      }
+      var next = (currentIndex + 1) % playlist.length;
+      playTrack(next);
+    }
+
+    function prevTrack() {
+      if (playlist.length === 0) return;
+      var track = playlist[currentIndex];
+      if (track && track.type === 'yt_playlist' && ytReady && ytPlayer && ytPlayer.previousVideo) {
+        ytPlayer.previousVideo();
+        return;
+      }
+      var prev = (currentIndex - 1 + playlist.length) % playlist.length;
+      playTrack(prev);
+    }
+
+    audioPlayer.onended = function() {
+      nextTrack();
+    };
+
+    // YouTube IFrame API 로드
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('yt-player', {
+        height: '150',
+        width: '240',
+        playerVars: {
+          'playsinline': 1,
+          'rel': 0,
+          'origin': window.location.origin
+        },
+        events: {
+          'onReady': function() {
+            ytReady = true;
+            if (pendingTrack) {
+              loadYouTubeTrack(pendingTrack);
+              pendingTrack = null;
+            }
+          },
+          'onStateChange': function(event) {
+            if (event.data === 1) {
+              updateTurntableUI(true);
+              document.getElementById('trackSource').innerText = '유튜브 / 유튜브 뮤직 스트리밍 재생 중';
+              if (ytPlayer.getVideoData) {
+                var data = ytPlayer.getVideoData();
+                if (data && data.title && currentIndex !== -1) {
+                  document.getElementById('trackTitle').innerText = data.title;
+                  playlist[currentIndex].title = data.title;
+                  renderPlaylist();
+                }
+                if (data && data.video_id) {
+                  document.getElementById('vinylLabel').style.backgroundImage = 'url(https://img.youtube.com/vi/' + data.video_id + '/hqdefault.jpg)';
+                }
+              }
+            } else if (event.data === 2) {
+              updateTurntableUI(false);
+              document.getElementById('trackSource').innerText = '일시정지됨';
+            } else if (event.data === 0) {
+              updateTurntableUI(false);
+              var track = playlist[currentIndex];
+              if (track && track.type !== 'yt_playlist') {
+                nextTrack();
+              }
+            }
+          },
+          'onError': function(event) {
+            updateTurntableUI(false);
+            document.getElementById('trackSource').innerText = '⚠ 외부 재생 제한 영상(오류 ' + event.data + ') - 다른 링크를 선택해 주세요';
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
