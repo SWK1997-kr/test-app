@@ -1,859 +1,843 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2775.2">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Vinyl Studio Pro">
+  <title>Analog LP Turntable Pro</title>
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      transition: background-color 0.4s ease, color 0.4s ease;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* 테마 1: 클래식 원목 (기본) */
+    body.theme-wood { background-color: #24170f; color: #f5ebe0; }
+    body.theme-wood .deck {
+      background: linear-gradient(145deg, #7c4d2b 0%, #462814 100%);
+      border: 5px solid #2e190b;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.65), inset 0 2px 4px rgba(255,255,255,0.15);
+    }
+    body.theme-wood .panel { background-color: rgba(26, 15, 8, 0.8); border: 1px solid rgba(255,255,255,0.12); }
+
+    /* 테마 2: 모던 다크 스튜디오 */
+    body.theme-dark { background-color: #0f0f11; color: #f4f4f5; }
+    body.theme-dark .deck {
+      background: linear-gradient(145deg, #27272a 0%, #141417 100%);
+      border: 5px solid #3f3f46;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.08);
+    }
+    body.theme-dark .panel { background-color: rgba(24, 24, 27, 0.88); border: 1px solid #27272a; }
+
+    /* 테마 3: 레트로 민트 파스텔 */
+    body.theme-mint { background-color: #d6e8e2; color: #1e293b; }
+    body.theme-mint .deck {
+      background: linear-gradient(145deg, #9fd3c0 0%, #68aa91 100%);
+      border: 5px solid #4d8871;
+      box-shadow: 0 18px 36px rgba(77,136,113,0.35), inset 0 2px 4px rgba(255,255,255,0.4);
+    }
+    body.theme-mint .panel { background-color: rgba(255, 255, 255, 0.88); border: 1px solid #cbd5e1; }
+
+    .header {
+      width: 100%;
+      max-width: 720px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .brand { font-size: 18px; font-weight: 800; letter-spacing: 1.5px; }
+    .theme-btns button {
+      padding: 6px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.25);
+      color: inherit;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+    body.theme-mint .theme-btns button { background: rgba(255,255,255,0.7); border-color: #94a3b8; }
+
+    /* 턴테이블 데크 */
+    .deck {
+      position: relative;
+      width: 100%;
+      max-width: 720px;
+      height: 340px;
+      border-radius: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    /* LP 레코드판 및 광택 효과 */
+    .platter {
+      width: 270px;
+      height: 270px;
+      border-radius: 50%;
+      background: #0a0a0a;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.75);
+      border: 6px solid #262626;
+    }
+    .vinyl {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: repeating-radial-gradient(
+        #111111 0,
+        #111111 3px,
+        #222222 4px,
+        #111111 5px
+      );
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .vinyl-sheen {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      border-radius: 50%;
+      background: linear-gradient(125deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.1) 100%);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .vinyl.spinning-33 {
+      -webkit-animation: spin 3.6s linear infinite;
+      animation: spin 3.6s linear infinite;
+    }
+    .vinyl.spinning-45 {
+      -webkit-animation: spin 2.5s linear infinite;
+      animation: spin 2.5s linear infinite;
+    }
+    @-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+
+    .label {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #e63946 0%, #8d1d24 100%);
+      background-size: cover;
+      background-position: center;
+      border: 3px solid #f1faee;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.5);
+    }
+    .spindle {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #ffffff, #a1a1aa);
+      border: 2px solid #3f3f46;
+      z-index: 3;
+    }
+
+    /* 톤암 (바늘 + 무게추) */
+    .tonearm-base {
+      position: absolute;
+      top: 24px;
+      right: 36px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #f4f4f5, #71717a);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.6);
+      z-index: 10;
+    }
+    .tonearm {
+      position: absolute;
+      top: 24px;
+      left: 22px;
+      width: 8px;
+      height: 190px;
+      background: linear-gradient(90deg, #e4e4e7, #9ca3af);
+      border-radius: 4px;
+      -webkit-transform-origin: top center;
+      transform-origin: top center;
+      -webkit-transform: rotate(0deg);
+      transform: rotate(0deg);
+      -webkit-transition: -webkit-transform 0.8s ease-in-out;
+      transition: transform 0.8s ease-in-out;
+    }
+    .tonearm-weight {
+      position: absolute;
+      top: -22px;
+      left: -6px;
+      width: 20px;
+      height: 18px;
+      background: #27272a;
+      border-radius: 3px;
+      border: 1px solid #71717a;
+    }
+    .tonearm.playing {
+      -webkit-transform: rotate(27deg);
+      transform: rotate(27deg);
+    }
+    .headshell {
+      position: absolute;
+      bottom: -14px;
+      left: -5px;
+      width: 18px;
+      height: 26px;
+      background: #18181b;
+      border-radius: 3px;
+      -webkit-transform: rotate(15deg);
+      transform: rotate(15deg);
+    }
+
+    /* 좌측 하단 전원 LED & RPM 스위치 */
+    .deck-bottom-left {
+      position: absolute;
+      bottom: 18px;
+      left: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .power-led {
+      display: flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .led-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #52525b;
+      margin-right: 6px;
+    }
+    .led-dot.on {
+      background: #22c55e;
+      box-shadow: 0 0 10px #22c55e;
+    }
+    .rpm-switch {
+      display: flex;
+      gap: 4px;
+    }
+    .rpm-btn {
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: bold;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.25);
+      background: rgba(0,0,0,0.4);
+      color: #fff;
+      cursor: pointer;
+    }
+    .rpm-btn.active {
+      background: #d97706;
+      border-color: #fbbf24;
+    }
+
+    /* 컨트롤 패널 */
+    .panel {
+      width: 100%;
+      max-width: 720px;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .now-playing {
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .track-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .track-source { font-size: 12px; opacity: 0.75; }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .btn {
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: none;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #d97706;
+      color: #fff;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-sub { background: rgba(120,120,120,0.3); color: inherit; }
+
+    /* 치직거림 믹서 */
+    .crackle-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 10px;
+      border-top: 1px solid rgba(150,150,150,0.2);
+      font-size: 13px;
+    }
+    .crackle-box input[type="range"] { width: 140px; }
+
+    /* 음원 추가 영역 */
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .input-group input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(150,150,150,0.4);
+      font-size: 14px;
+      background: rgba(255,255,255,0.95);
+      color: #111;
+    }
+    .file-label {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px dashed rgba(150,150,150,0.6);
+      cursor: pointer;
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    #fileInput { display: none; }
+
+    /* 플레이리스트 */
+    .playlist {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      max-height: 190px;
+      overflow-y: auto;
+    }
+    .playlist li {
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      background: rgba(120,120,120,0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .playlist li.active {
+      background: #d97706;
+      color: #fff;
+      font-weight: bold;
+    }
+    .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(0,0,0,0.3);
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+
+    /* 유튜브 미니 프레임 */
+    #yt-wrapper {
+      width: 100%;
+      max-width: 720px;
+      text-align: center;
+      margin-bottom: 12px;
+      display: none;
+    }
+    #yt-player {
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 0 auto;
+    }
   </style>
 </head>
-<body>
-<p class="p1">&lt;!DOCTYPE html&gt;</p>
-<p class="p1">&lt;html lang="ko"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-title" content="Vinyl Studio Pro"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Analog LP Turntable Pro&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>transition: background-color 0.4s ease, color 0.4s ease;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>min-height: 100vh;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex-direction: column;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 테마 1: 클래식 원목 (기본) */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-wood { background-color: #24170f; color: #f5ebe0; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-wood .deck {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(145deg, #7c4d2b 0%, #462814 100%);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 5px solid #2e190b;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 24px 48px rgba(0,0,0,0.65), inset 0 2px 4px rgba(255,255,255,0.15);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-wood .panel { background-color: rgba(26, 15, 8, 0.8); border: 1px solid rgba(255,255,255,0.12); }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 테마 2: 모던 다크 스튜디오 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-dark { background-color: #0f0f11; color: #f4f4f5; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-dark .deck {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(145deg, #27272a 0%, #141417 100%);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 5px solid #3f3f46;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 24px 48px rgba(0,0,0,0.85), inset 0 2px 4px rgba(255,255,255,0.08);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-dark .panel { background-color: rgba(24, 24, 27, 0.88); border: 1px solid #27272a; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 테마 3: 레트로 민트 파스텔 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-mint { background-color: #d6e8e2; color: #1e293b; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-mint .deck {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(145deg, #9fd3c0 0%, #68aa91 100%);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 5px solid #4d8871;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 18px 36px rgba(77,136,113,0.35), inset 0 2px 4px rgba(255,255,255,0.4);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-mint .panel { background-color: rgba(255, 255, 255, 0.88); border: 1px solid #cbd5e1; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.header {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>max-width: 720px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.brand { font-size: 18px; font-weight: 800; letter-spacing: 1.5px; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.theme-btns button {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 6px 11px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight: 600;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 1px solid rgba(255,255,255,0.3);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,0.25);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color: inherit;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-left: 4px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body.theme-mint .theme-btns button { background: rgba(255,255,255,0.7); border-color: #94a3b8; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 턴테이블 데크 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.deck {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: relative;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>max-width: 720px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 340px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 22px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>overflow: hidden;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* LP 레코드판 및 광택 효과 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.platter {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 270px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 270px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #0a0a0a;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: relative;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 10px 30px rgba(0,0,0,0.75);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 6px solid #262626;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.vinyl {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: repeating-radial-gradient(</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#111111 0,</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#111111 3px,</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#222222 4px,</p>
-<p class="p1"><span class="Apple-converted-space">        </span>#111111 5px</p>
-<p class="p1"><span class="Apple-converted-space">      </span>);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: relative;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>overflow: hidden;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.vinyl-sheen {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: absolute;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>top: 0; left: 0; right: 0; bottom: 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(125deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.1) 100%);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>pointer-events: none;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>z-index: 2;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.vinyl.spinning-33 {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>-webkit-animation: spin 3.6s linear infinite;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>animation: spin 3.6s linear infinite;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.vinyl.spinning-45 {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>-webkit-animation: spin 2.5s linear infinite;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>animation: spin 2.5s linear infinite;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>@-webkit-keyframes spin { 100% { -webkit-transform: rotate(360deg); } }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>@keyframes spin { 100% { transform: rotate(360deg); } }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.label {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 96px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 96px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: radial-gradient(circle, #e63946 0%, #8d1d24 100%);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background-size: cover;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background-position: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 3px solid #f1faee;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: relative;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: inset 0 0 8px rgba(0,0,0,0.5);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.spindle {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: radial-gradient(circle, #ffffff, #a1a1aa);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 2px solid #3f3f46;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>z-index: 3;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 톤암 (바늘 + 무게추) */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.tonearm-base {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: absolute;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>top: 24px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>right: 36px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 52px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 52px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: radial-gradient(circle, #f4f4f5, #71717a);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 6px 14px rgba(0,0,0,0.6);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>z-index: 10;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.tonearm {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: absolute;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>top: 24px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>left: 22px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 190px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(90deg, #e4e4e7, #9ca3af);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 4px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>-webkit-transform-origin: top center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>transform-origin: top center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>-webkit-transform: rotate(0deg);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>transform: rotate(0deg);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>-webkit-transition: -webkit-transform 0.8s ease-in-out;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>transition: transform 0.8s ease-in-out;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.tonearm-weight {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: absolute;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>top: -22px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>left: -6px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 20px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #27272a;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 3px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 1px solid #71717a;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.tonearm.playing {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>-webkit-transform: rotate(27deg);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>transform: rotate(27deg);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.headshell {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: absolute;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>bottom: -14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>left: -5px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 26px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #18181b;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 3px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>-webkit-transform: rotate(15deg);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>transform: rotate(15deg);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 좌측 하단 전원 LED &amp; RPM 스위치 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.deck-bottom-left {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position: absolute;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>bottom: 18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>left: 22px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex-direction: column;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.power-led {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 11px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight: 700;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing: 0.5px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.led-dot {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 50%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #52525b;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-right: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.led-dot.on {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #22c55e;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: 0 0 10px #22c55e;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.rpm-switch {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap: 4px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.rpm-btn {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 4px 8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 11px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight: bold;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 4px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 1px solid rgba(255,255,255,0.25);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,0.4);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color: #fff;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.rpm-btn.active {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #d97706;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-color: #fbbf24;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 컨트롤 패널 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.panel {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>max-width: 720px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 16px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.now-playing {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>text-align: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.track-title { font-size: 16px; font-weight: bold; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.track-source { font-size: 12px; opacity: 0.75; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.controls {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.btn {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 10px 18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: none;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight: 600;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #d97706;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color: #fff;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.btn:active { opacity: 0.8; }</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.btn-sub { background: rgba(120,120,120,0.3); color: inherit; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 치직거림 믹서 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.crackle-box {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding-top: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-top: 1px solid rgba(150,150,150,0.2);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 13px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.crackle-box input[type="range"] { width: 140px; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 음원 추가 영역 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.input-group {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.input-group input[type="text"] {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex: 1;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 1px solid rgba(150,150,150,0.4);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(255,255,255,0.95);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color: #111;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.file-label {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: inline-block;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>text-align: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border: 1px dashed rgba(150,150,150,0.6);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 13px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#fileInput { display: none; }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 플레이리스트 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.playlist {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>list-style: none;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin: 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>max-height: 190px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>overflow-y: auto;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.playlist li {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 10px 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom: 6px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(120,120,120,0.15);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content: space-between;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 13px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cursor: pointer;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.playlist li.active {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: #d97706;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color: #fff;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight: bold;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.badge {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding: 2px 6px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 4px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,0.3);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-left: 8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>white-space: nowrap;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>/* 유튜브 미니 프레임 */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#yt-wrapper {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width: 100%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>max-width: 720px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>text-align: center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-bottom: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display: none;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>#yt-player {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>overflow: hidden;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin: 0 auto;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p1">&lt;body class="theme-wood"&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="header"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="brand"&gt;VINYL STUDIO PRO&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="theme-btns"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button onclick="setTheme('theme-wood')"&gt;원목&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button onclick="setTheme('theme-dark')"&gt;다크&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button onclick="setTheme('theme-mint')"&gt;민트&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 턴테이블 본체 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="deck"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="platter"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="vinyl-sheen"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="vinyl" id="vinyl"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="label" id="vinylLabel"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="spindle"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tonearm-base"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="tonearm" id="tonearm"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="tonearm-weight"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="headshell"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="deck-bottom-left"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="power-led"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="led-dot" id="ledDot"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;span id="rpmLabel"&gt;33 1/3 RPM&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="rpm-switch"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="rpm-btn active" id="btn33" onclick="setRPM(33)"&gt;33 RPM&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;button class="rpm-btn" id="btn45" onclick="setRPM(45)"&gt;45 RPM&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 유튜브 재생 시 표시되는 미니 프레임 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div id="yt-wrapper"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="yt-guide" style="font-size:12px; margin-bottom:6px; color:#fbbf24; font-weight:600;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>▶ 아래 유튜브 플레이어의 재생 버튼을 눌러 시작해 주세요</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div id="yt-player"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 메인 컨트롤러 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="panel"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="now-playing"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="track-title" id="trackTitle"&gt;재생할 음악을 추가해 주세요&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="track-source" id="trackSource"&gt;로컬 파일 · 유튜브 곡 · 유튜브 뮤직 재생목록 지원&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="controls"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn btn-sub" onclick="prevTrack()"&gt;이전 곡&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn" id="playPauseBtn" onclick="togglePlay()"&gt;재생 / 일시정지&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn btn-sub" onclick="nextTrack()"&gt;다음 곡&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="crackle-box"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;span&gt;아날로그 LP 치직거림 효과 (재생 시 작동)&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;input type="range" id="crackleVol" min="0" max="100" value="25" oninput="updateCrackleVolume(this.value)"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;!-- 음원 추가 및 플레이리스트 --&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="panel"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;label class="file-label" for="fileInput"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>+ 내 기기에서 음악 파일 불러오기 (MP3, M4A, WAV 등 다중 선택)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;input type="file" id="fileInput" accept="audio/*" multiple onchange="handleFiles(this.files)"&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="input-group"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;input type="text" id="ytUrlInput" placeholder="유튜브 / 유튜브 뮤직 곡 또는 재생목록(list=) 링크"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button class="btn" onclick="addYoutubeLink()"&gt;추가&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;ul class="playlist" id="playlistEl"&gt;&lt;/ul&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;audio id="audioPlayer"&gt;&lt;/audio&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var playlist = [];</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var currentIndex = -1;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var isPlaying = false;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var currentRPM = 33;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var audioPlayer = document.getElementById('audioPlayer');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var ytPlayer = null;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var ytReady = false;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var pendingTrack = null;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Web Audio API (LP 치직거림 노이즈 - 반드시 재생 중일 때만 소리 출력)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var audioCtx = null;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var crackleNode = null;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var crackleGain = null;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function initCrackle() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (audioCtx) return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var AudioContext = window.AudioContext || window.webkitAudioContext;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (!AudioContext) return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>audioCtx = new AudioContext();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>var bufferSize = 2 * audioCtx.sampleRate;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var output = noiseBuffer.getChannelData(0);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (var i = 0; i &lt; bufferSize; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>var r = Math.random();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (r &gt; 0.9985) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>output[i] = (Math.random() * 2 - 1) * 0.45;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>output[i] = (Math.random() * 2 - 1) * 0.015;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>crackleNode = audioCtx.createBufferSource();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>crackleNode.buffer = noiseBuffer;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>crackleNode.loop = true;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>crackleGain = audioCtx.createGain();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// 초기 볼륨은 무조건 0으로 시작 (재생 상태가 될 때만 볼륨 반영)</p>
-<p class="p1"><span class="Apple-converted-space">      </span>crackleGain.gain.value = 0;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>crackleNode.connect(crackleGain);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>crackleGain.connect(audioCtx.destination);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>crackleNode.start(0);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function updateCrackleVolume(val) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// 현재 음원이 재생 중(isPlaying === true)일 때만 볼륨을 변경</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (crackleGain) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (isPlaying) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>crackleGain.gain.value = (val / 100) * 0.5;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>crackleGain.gain.value = 0;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function setCrackleActive(active) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (active) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>initCrackle();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (!audioCtx || !crackleGain) return;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (active) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (audioCtx.state === 'suspended') {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>audioCtx.resume();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>var val = document.getElementById('crackleVol').value / 100;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>crackleGain.gain.value = val * 0.5;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>crackleGain.gain.value = 0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 테마 변경</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function setTheme(themeName) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>document.body.className = themeName;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 33 / 45 RPM 속도 변경</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function setRPM(rpm) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>currentRPM = rpm;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('rpmLabel').innerText = (rpm === 33) ? '33 1/3 RPM' : '45 RPM';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('btn33').className = (rpm === 33) ? 'rpm-btn active' : 'rpm-btn';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('btn45').className = (rpm === 45) ? 'rpm-btn active' : 'rpm-btn';</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>var rate = (rpm === 33) ? 1.0 : 1.25;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>audioPlayer.playbackRate = rate;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (ytReady &amp;&amp; ytPlayer &amp;&amp; ytPlayer.setPlaybackRate) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ytPlayer.setPlaybackRate(rate);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (isPlaying) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>updateTurntableUI(true);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 턴테이블 시각 상태 및 치직거림 동기화</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function updateTurntableUI(playing) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>isPlaying = playing;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var vinyl = document.getElementById('vinyl');</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var tonearm = document.getElementById('tonearm');</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var led = document.getElementById('ledDot');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>vinyl.classList.remove('spinning-33');</p>
-<p class="p1"><span class="Apple-converted-space">      </span>vinyl.classList.remove('spinning-45');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (playing) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>vinyl.classList.add(currentRPM === 33 ? 'spinning-33' : 'spinning-45');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>tonearm.classList.add('playing');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>led.classList.add('on');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>setCrackleActive(true);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>tonearm.classList.remove('playing');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>led.classList.remove('on');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>setCrackleActive(false);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 로컬 파일 추가</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function handleFiles(files) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (var i = 0; i &lt; files.length; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>var file = files[i];</p>
-<p class="p1"><span class="Apple-converted-space">        </span>var url = URL.createObjectURL(file);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>playlist.push({</p>
-<p class="p1"><span class="Apple-converted-space">          </span>type: 'local',</p>
-<p class="p1"><span class="Apple-converted-space">          </span>title: file.name.replace(/\.[^/.]+$/, ""),</p>
-<p class="p1"><span class="Apple-converted-space">          </span>url: url,</p>
-<p class="p1"><span class="Apple-converted-space">          </span>thumb: ''</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>renderPlaylist();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (currentIndex === -1 &amp;&amp; playlist.length &gt; 0) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>playTrack(0);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 유튜브 URL 정밀 파싱 (일반, 단축, 뮤직, 쇼츠, 재생목록 모두 지원)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function parseYouTubeUrl(url) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var listMatch = url.match(/[?&amp;]list=([^#\&amp;\?]+)/);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var vidMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&amp;v=|shorts\/)|music\.youtube\.com\/watch\?v=)([^#\&amp;\?]{11})/);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var videoId = vidMatch ? vidMatch[1] : null;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var listId = listMatch ? listMatch[1] : null;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>return { videoId: videoId, listId: listId };</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 유튜브 곡 또는 재생목록 추가</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function addYoutubeLink() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var input = document.getElementById('ytUrlInput');</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var url = input.value.trim();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var parsed = parseYouTubeUrl(url);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (!parsed.videoId &amp;&amp; !parsed.listId) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>alert('올바른 유튜브 또는 유튜브 뮤직 링크를 입력해 주세요.');</p>
-<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (parsed.listId &amp;&amp; !parsed.videoId) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>playlist.push({</p>
-<p class="p1"><span class="Apple-converted-space">          </span>type: 'yt_playlist',</p>
-<p class="p1"><span class="Apple-converted-space">          </span>title: 'YouTube 재생목록 (' + parsed.listId.substring(0, 8) + '...)',</p>
-<p class="p1"><span class="Apple-converted-space">          </span>listId: parsed.listId,</p>
-<p class="p1"><span class="Apple-converted-space">          </span>thumb: ''</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else if (parsed.listId &amp;&amp; parsed.videoId) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>playlist.push({</p>
-<p class="p1"><span class="Apple-converted-space">          </span>type: 'yt_playlist',</p>
-<p class="p1"><span class="Apple-converted-space">          </span>title: 'YouTube 재생목록 스트리밍',</p>
-<p class="p1"><span class="Apple-converted-space">          </span>listId: parsed.listId,</p>
-<p class="p1"><span class="Apple-converted-space">          </span>videoId: parsed.videoId,</p>
-<p class="p1"><span class="Apple-converted-space">          </span>thumb: 'https://img.youtube.com/vi/' + parsed.videoId + '/hqdefault.jpg'</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>playlist.push({</p>
-<p class="p1"><span class="Apple-converted-space">          </span>type: 'youtube',</p>
-<p class="p1"><span class="Apple-converted-space">          </span>title: 'YouTube 트랙 (' + parsed.videoId + ')',</p>
-<p class="p1"><span class="Apple-converted-space">          </span>videoId: parsed.videoId,</p>
-<p class="p1"><span class="Apple-converted-space">          </span>thumb: 'https://img.youtube.com/vi/' + parsed.videoId + '/hqdefault.jpg'</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>input.value = '';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>renderPlaylist();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (currentIndex === -1) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>playTrack(playlist.length - 1);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 플레이리스트 렌더링</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function renderPlaylist() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var ul = document.getElementById('playlistEl');</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ul.innerHTML = '';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>for (var i = 0; i &lt; playlist.length; i++) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>(function(idx) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>var item = playlist[idx];</p>
-<p class="p1"><span class="Apple-converted-space">          </span>var li = document.createElement('li');</p>
-<p class="p1"><span class="Apple-converted-space">          </span>if (idx === currentIndex) li.className = 'active';</p>
-<p class="p1"><span class="Apple-converted-space">          </span>var badgeText = '내 파일';</p>
-<p class="p1"><span class="Apple-converted-space">          </span>if (item.type === 'youtube') badgeText = 'YT 곡';</p>
-<p class="p1"><span class="Apple-converted-space">          </span>if (item.type === 'yt_playlist') badgeText = 'YT 재생목록';</p>
-<p class="p1"><span class="Apple-converted-space">          </span>li.innerHTML = '&lt;span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"&gt;' + (idx + 1) + '. ' + item.title + '&lt;/span&gt;&lt;span class="badge"&gt;' + badgeText + '&lt;/span&gt;';</p>
-<p class="p1"><span class="Apple-converted-space">          </span>li.onclick = function() { playTrack(idx); };</p>
-<p class="p1"><span class="Apple-converted-space">          </span>ul.appendChild(li);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>})(i);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 유튜브 트랙 로드 실행 함수</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function loadYouTubeTrack(track) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('yt-wrapper').style.display = 'block';</p>
-<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('yt-guide').innerText = '▶ 아래 유튜브 화면의 재생 버튼을 터치하면 LP판이 돌아갑니다';</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (!ytReady || !ytPlayer) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>pendingTrack = track;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (track.type === 'youtube') {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// iOS 호환을 위해 cueVideoById로 안전하게 먼저 불러온 뒤 재생 시도</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ytPlayer.cueVideoById(track.videoId);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>setTimeout(function() {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>if (ytPlayer &amp;&amp; ytPlayer.playVideo) ytPlayer.playVideo();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}, 300);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else if (track.type === 'yt_playlist') {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ytPlayer.cuePlaylist({</p>
-<p class="p1"><span class="Apple-converted-space">          </span>list: track.listId,</p>
-<p class="p1"><span class="Apple-converted-space">          </span>listType: 'playlist'</p>
-<p class="p1"><span class="Apple-converted-space">        </span>});</p>
-<p class="p1"><span class="Apple-converted-space">        </span>setTimeout(function() {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>if (ytPlayer &amp;&amp; ytPlayer.playVideo) ytPlayer.playVideo();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}, 500);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// 트랙 재생 실행</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function playTrack(index) {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (index &lt; 0 || index &gt;= playlist.length) return;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>currentIndex = index;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var track = playlist[index];</p>
-<p class="p1"><span class="Apple-converted-space">      </span>renderPlaylist();</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>document.getElementById('trackTitle').innerText = track.title;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var labelEl = document.getElementById('vinylLabel');</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (track.type === 'local') {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('trackSource').innerText = '로컬 오디오 파일 재생 중';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('yt-wrapper').style.display = 'none';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (ytPlayer &amp;&amp; ytReady &amp;&amp; ytPlayer.stopVideo) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>ytPlayer.stopVideo();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>labelEl.style.backgroundImage = 'none';</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">        </span>audioPlayer.src = track.url;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>audioPlayer.playbackRate = (currentRPM === 33) ? 1.0 : 1.25;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>audioPlayer.play();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>updateTurntableUI(true);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else if (track.type === 'youtube' || track.type === 'yt_playlist') {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>document.getElementById('trackSource').innerText = '유튜브 / 유튜브 뮤직 스트리밍 연동';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>audioPlayer.pause();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>updateTurntableUI(false); // 실제 유튜브 영상 재생이 시작될 때 회전 시작</p>
-<p class="p1"><span class="Apple-converted-space">        </span>labelEl.style.backgroundImage = track.thumb ? ('url(' + track.thumb + ')') : 'none';</p>
-<p class="p1"><span class="Apple-converted-space">        </span>loadYouTubeTrack(track);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function togglePlay() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (currentIndex === -1) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (playlist.length &gt; 0) playTrack(0);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var track = playlist[currentIndex];</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (track.type === 'local') {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (audioPlayer.paused) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>audioPlayer.play();</p>
-<p class="p1"><span class="Apple-converted-space">          </span>updateTurntableUI(true);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>audioPlayer.pause();</p>
-<p class="p1"><span class="Apple-converted-space">          </span>updateTurntableUI(false);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else if ((track.type === 'youtube' || track.type === 'yt_playlist') &amp;&amp; ytReady &amp;&amp; ytPlayer) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>var state = ytPlayer.getPlayerState();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>if (state === 1) {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>ytPlayer.pauseVideo();</p>
-<p class="p1"><span class="Apple-converted-space">          </span>updateTurntableUI(false);</p>
-<p class="p1"><span class="Apple-converted-space">        </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>ytPlayer.playVideo();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function nextTrack() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (playlist.length === 0) return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var track = playlist[currentIndex];</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (track &amp;&amp; track.type === 'yt_playlist' &amp;&amp; ytReady &amp;&amp; ytPlayer &amp;&amp; ytPlayer.nextVideo) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ytPlayer.nextVideo();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var next = (currentIndex + 1) % playlist.length;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>playTrack(next);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function prevTrack() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (playlist.length === 0) return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var track = playlist[currentIndex];</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (track &amp;&amp; track.type === 'yt_playlist' &amp;&amp; ytReady &amp;&amp; ytPlayer &amp;&amp; ytPlayer.previousVideo) {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>ytPlayer.previousVideo();</p>
-<p class="p1"><span class="Apple-converted-space">        </span>return;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>var prev = (currentIndex - 1 + playlist.length) % playlist.length;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>playTrack(prev);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>audioPlayer.onended = function() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>nextTrack();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// YouTube IFrame API 로드</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var tag = document.createElement('script');</p>
-<p class="p1"><span class="Apple-converted-space">    </span>tag.src = "https://www.youtube.com/iframe_api";</p>
-<p class="p1"><span class="Apple-converted-space">    </span>var firstScriptTag = document.getElementsByTagName('script')[0];</p>
-<p class="p1"><span class="Apple-converted-space">    </span>firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function onYouTubeIframeAPIReady() {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>ytPlayer = new YT.Player('yt-player', {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>height: '170',</p>
-<p class="p1"><span class="Apple-converted-space">        </span>width: '300',</p>
-<p class="p1"><span class="Apple-converted-space">        </span>playerVars: {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>'playsinline': 1,</p>
-<p class="p1"><span class="Apple-converted-space">          </span>'rel': 0,</p>
-<p class="p1"><span class="Apple-converted-space">          </span>'origin': window.location.origin</p>
-<p class="p1"><span class="Apple-converted-space">        </span>},</p>
-<p class="p1"><span class="Apple-converted-space">        </span>events: {</p>
-<p class="p1"><span class="Apple-converted-space">          </span>'onReady': function() {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>ytReady = true;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (pendingTrack) {</p>
-<p class="p1"><span class="Apple-converted-space">              </span>loadYouTubeTrack(pendingTrack);</p>
-<p class="p1"><span class="Apple-converted-space">              </span>pendingTrack = null;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">          </span>},</p>
-<p class="p1"><span class="Apple-converted-space">          </span>'onStateChange': function(event) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>if (event.data === 1) {</p>
-<p class="p1"><span class="Apple-converted-space">              </span>// 실제 영상이 재생 중(PLAYING)일 때만 LP 회전 및 치직거림 시작</p>
-<p class="p1"><span class="Apple-converted-space">              </span>updateTurntableUI(true);</p>
-<p class="p1"><span class="Apple-converted-space">              </span>document.getElementById('yt-guide').innerText = '♪ 유튜브 스트리밍 재생 중';</p>
-<p class="p1"><span class="Apple-converted-space">              </span>if (ytPlayer.getVideoData) {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>var data = ytPlayer.getVideoData();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (data &amp;&amp; data.title &amp;&amp; currentIndex !== -1) {</p>
-<p class="p1"><span class="Apple-converted-space">                  </span>document.getElementById('trackTitle').innerText = data.title;</p>
-<p class="p1"><span class="Apple-converted-space">                  </span>playlist[currentIndex].title = data.title;</p>
-<p class="p1"><span class="Apple-converted-space">                  </span>renderPlaylist();</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">                </span>if (data &amp;&amp; data.video_id) {</p>
-<p class="p1"><span class="Apple-converted-space">                  </span>document.getElementById('vinylLabel').style.backgroundImage = 'url(https://img.youtube.com/vi/' + data.video_id + '/hqdefault.jpg)';</p>
-<p class="p1"><span class="Apple-converted-space">                </span>}</p>
-<p class="p1"><span class="Apple-converted-space">              </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else if (event.data === 2) {</p>
-<p class="p1"><span class="Apple-converted-space">              </span>// 일시정지</p>
-<p class="p1"><span class="Apple-converted-space">              </span>updateTurntableUI(false);</p>
-<p class="p1"><span class="Apple-converted-space">              </span>document.getElementById('yt-guide').innerText = '⏸ 일시정지됨';</p>
-<p class="p1"><span class="Apple-converted-space">            </span>} else if (event.data === 0) {</p>
-<p class="p1"><span class="Apple-converted-space">              </span>// 재생 종료</p>
-<p class="p1"><span class="Apple-converted-space">              </span>updateTurntableUI(false);</p>
-<p class="p1"><span class="Apple-converted-space">              </span>var track = playlist[currentIndex];</p>
-<p class="p1"><span class="Apple-converted-space">              </span>if (track &amp;&amp; track.type !== 'yt_playlist') {</p>
-<p class="p1"><span class="Apple-converted-space">                </span>nextTrack();</p>
-<p class="p1"><span class="Apple-converted-space">              </span>}</p>
-<p class="p1"><span class="Apple-converted-space">            </span>}</p>
-<p class="p1"><span class="Apple-converted-space">          </span>},</p>
-<p class="p1"><span class="Apple-converted-space">          </span>'onError': function(event) {</p>
-<p class="p1"><span class="Apple-converted-space">            </span>updateTurntableUI(false);</p>
-<p class="p1"><span class="Apple-converted-space">            </span>document.getElementById('yt-guide').innerText = '⚠ 이 영상은 저작권자의 외부 재생 제한(오류 ' + event.data + ')으로 재생할 수 없습니다. 다른 링크를 시도해 주세요.';</p>
-<p class="p1"><span class="Apple-converted-space">          </span>}</p>
-<p class="p1"><span class="Apple-converted-space">        </span>}</p>
-<p class="p1"><span class="Apple-converted-space">      </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+<body class="theme-wood">
+
+  <div class="header">
+    <div class="brand">VINYL STUDIO PRO</div>
+    <div class="theme-btns">
+      <button onclick="setTheme('theme-wood')">원목</button>
+      <button onclick="setTheme('theme-dark')">다크</button>
+      <button onclick="setTheme('theme-mint')">민트</button>
+    </div>
+  </div>
+
+  <!-- 턴테이블 본체 -->
+  <div class="deck">
+    <div class="platter">
+      <div class="vinyl-sheen"></div>
+      <div class="vinyl" id="vinyl">
+        <div class="label" id="vinylLabel">
+          <div class="spindle"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tonearm-base">
+      <div class="tonearm" id="tonearm">
+        <div class="tonearm-weight"></div>
+        <div class="headshell"></div>
+      </div>
+    </div>
+
+    <div class="deck-bottom-left">
+      <div class="power-led">
+        <div class="led-dot" id="ledDot"></div>
+        <span id="rpmLabel">33 1/3 RPM</span>
+      </div>
+      <div class="rpm-switch">
+        <button class="rpm-btn active" id="btn33" onclick="setRPM(33)">33 RPM</button>
+        <button class="rpm-btn" id="btn45" onclick="setRPM(45)">45 RPM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 유튜브 재생 시 표시되는 미니 프레임 -->
+  <div id="yt-wrapper">
+    <div id="yt-guide" style="font-size:12px; margin-bottom:6px; color:#fbbf24; font-weight:600;">
+      ▶ 아래 유튜브 플레이어의 재생 버튼을 눌러 시작해 주세요
+    </div>
+    <div id="yt-player"></div>
+  </div>
+
+  <!-- 메인 컨트롤러 -->
+  <div class="panel">
+    <div class="now-playing">
+      <div class="track-title" id="trackTitle">재생할 음악을 추가해 주세요</div>
+      <div class="track-source" id="trackSource">로컬 파일 · 유튜브 곡 · 유튜브 뮤직 재생목록 지원</div>
+    </div>
+
+    <div class="controls">
+      <button class="btn btn-sub" onclick="prevTrack()">이전 곡</button>
+      <button class="btn" id="playPauseBtn" onclick="togglePlay()">재생 / 일시정지</button>
+      <button class="btn btn-sub" onclick="nextTrack()">다음 곡</button>
+    </div>
+
+    <div class="crackle-box">
+      <span>아날로그 LP 치직거림 효과 (재생 시 작동)</span>
+      <input type="range" id="crackleVol" min="0" max="100" value="25" oninput="updateCrackleVolume(this.value)">
+    </div>
+  </div>
+
+  <!-- 음원 추가 및 플레이리스트 -->
+  <div class="panel">
+    <label class="file-label" for="fileInput">
+      + 내 기기에서 음악 파일 불러오기 (MP3, M4A, WAV 등 다중 선택)
+    </label>
+    <input type="file" id="fileInput" accept="audio/*" multiple onchange="handleFiles(this.files)">
+
+    <div class="input-group">
+      <input type="text" id="ytUrlInput" placeholder="유튜브 / 유튜브 뮤직 곡 또는 재생목록(list=) 링크">
+      <button class="btn" onclick="addYoutubeLink()">추가</button>
+    </div>
+
+    <ul class="playlist" id="playlistEl"></ul>
+  </div>
+
+  <audio id="audioPlayer"></audio>
+
+  <script>
+    var playlist = [];
+    var currentIndex = -1;
+    var isPlaying = false;
+    var currentRPM = 33;
+    var audioPlayer = document.getElementById('audioPlayer');
+    var ytPlayer = null;
+    var ytReady = false;
+    var pendingTrack = null;
+
+    // Web Audio API (LP 치직거림 노이즈 - 반드시 재생 중일 때만 소리 출력)
+    var audioCtx = null;
+    var crackleNode = null;
+    var crackleGain = null;
+
+    function initCrackle() {
+      if (audioCtx) return;
+      var AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      audioCtx = new AudioContext();
+
+      var bufferSize = 2 * audioCtx.sampleRate;
+      var noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      var output = noiseBuffer.getChannelData(0);
+
+      for (var i = 0; i < bufferSize; i++) {
+        var r = Math.random();
+        if (r > 0.9985) {
+          output[i] = (Math.random() * 2 - 1) * 0.45;
+        } else {
+          output[i] = (Math.random() * 2 - 1) * 0.015;
+        }
+      }
+
+      crackleNode = audioCtx.createBufferSource();
+      crackleNode.buffer = noiseBuffer;
+      crackleNode.loop = true;
+
+      crackleGain = audioCtx.createGain();
+      // 초기 볼륨은 무조건 0으로 시작 (재생 상태가 될 때만 볼륨 반영)
+      crackleGain.gain.value = 0;
+
+      crackleNode.connect(crackleGain);
+      crackleGain.connect(audioCtx.destination);
+      crackleNode.start(0);
+    }
+
+    function updateCrackleVolume(val) {
+      // 현재 음원이 재생 중(isPlaying === true)일 때만 볼륨을 변경
+      if (crackleGain) {
+        if (isPlaying) {
+          crackleGain.gain.value = (val / 100) * 0.5;
+        } else {
+          crackleGain.gain.value = 0;
+        }
+      }
+    }
+
+    function setCrackleActive(active) {
+      if (active) {
+        initCrackle();
+      }
+      if (!audioCtx || !crackleGain) return;
+
+      if (active) {
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        var val = document.getElementById('crackleVol').value / 100;
+        crackleGain.gain.value = val * 0.5;
+      } else {
+        crackleGain.gain.value = 0;
+      }
+    }
+
+    // 테마 변경
+    function setTheme(themeName) {
+      document.body.className = themeName;
+    }
+
+    // 33 / 45 RPM 속도 변경
+    function setRPM(rpm) {
+      currentRPM = rpm;
+      document.getElementById('rpmLabel').innerText = (rpm === 33) ? '33 1/3 RPM' : '45 RPM';
+      document.getElementById('btn33').className = (rpm === 33) ? 'rpm-btn active' : 'rpm-btn';
+      document.getElementById('btn45').className = (rpm === 45) ? 'rpm-btn active' : 'rpm-btn';
+
+      var rate = (rpm === 33) ? 1.0 : 1.25;
+      audioPlayer.playbackRate = rate;
+      if (ytReady && ytPlayer && ytPlayer.setPlaybackRate) {
+        ytPlayer.setPlaybackRate(rate);
+      }
+
+      if (isPlaying) {
+        updateTurntableUI(true);
+      }
+    }
+
+    // 턴테이블 시각 상태 및 치직거림 동기화
+    function updateTurntableUI(playing) {
+      isPlaying = playing;
+      var vinyl = document.getElementById('vinyl');
+      var tonearm = document.getElementById('tonearm');
+      var led = document.getElementById('ledDot');
+
+      vinyl.classList.remove('spinning-33');
+      vinyl.classList.remove('spinning-45');
+
+      if (playing) {
+        vinyl.classList.add(currentRPM === 33 ? 'spinning-33' : 'spinning-45');
+        tonearm.classList.add('playing');
+        led.classList.add('on');
+        setCrackleActive(true);
+      } else {
+        tonearm.classList.remove('playing');
+        led.classList.remove('on');
+        setCrackleActive(false);
+      }
+    }
+
+    // 로컬 파일 추가
+    function handleFiles(files) {
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var url = URL.createObjectURL(file);
+        playlist.push({
+          type: 'local',
+          title: file.name.replace(/\.[^/.]+$/, ""),
+          url: url,
+          thumb: ''
+        });
+      }
+      renderPlaylist();
+      if (currentIndex === -1 && playlist.length > 0) {
+        playTrack(0);
+      }
+    }
+
+    // 유튜브 URL 정밀 파싱 (일반, 단축, 뮤직, 쇼츠, 재생목록 모두 지원)
+    function parseYouTubeUrl(url) {
+      var listMatch = url.match(/[?&]list=([^#\&\?]+)/);
+      var vidMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/)|music\.youtube\.com\/watch\?v=)([^#\&\?]{11})/);
+      var videoId = vidMatch ? vidMatch[1] : null;
+      var listId = listMatch ? listMatch[1] : null;
+      return { videoId: videoId, listId: listId };
+    }
+
+    // 유튜브 곡 또는 재생목록 추가
+    function addYoutubeLink() {
+      var input = document.getElementById('ytUrlInput');
+      var url = input.value.trim();
+      var parsed = parseYouTubeUrl(url);
+
+      if (!parsed.videoId && !parsed.listId) {
+        alert('올바른 유튜브 또는 유튜브 뮤직 링크를 입력해 주세요.');
+        return;
+      }
+
+      if (parsed.listId && !parsed.videoId) {
+        playlist.push({
+          type: 'yt_playlist',
+          title: 'YouTube 재생목록 (' + parsed.listId.substring(0, 8) + '...)',
+          listId: parsed.listId,
+          thumb: ''
+        });
+      } else if (parsed.listId && parsed.videoId) {
+        playlist.push({
+          type: 'yt_playlist',
+          title: 'YouTube 재생목록 스트리밍',
+          listId: parsed.listId,
+          videoId: parsed.videoId,
+          thumb: 'https://img.youtube.com/vi/' + parsed.videoId + '/hqdefault.jpg'
+        });
+      } else {
+        playlist.push({
+          type: 'youtube',
+          title: 'YouTube 트랙 (' + parsed.videoId + ')',
+          videoId: parsed.videoId,
+          thumb: 'https://img.youtube.com/vi/' + parsed.videoId + '/hqdefault.jpg'
+        });
+      }
+
+      input.value = '';
+      renderPlaylist();
+      if (currentIndex === -1) {
+        playTrack(playlist.length - 1);
+      }
+    }
+
+    // 플레이리스트 렌더링
+    function renderPlaylist() {
+      var ul = document.getElementById('playlistEl');
+      ul.innerHTML = '';
+      for (var i = 0; i < playlist.length; i++) {
+        (function(idx) {
+          var item = playlist[idx];
+          var li = document.createElement('li');
+          if (idx === currentIndex) li.className = 'active';
+          var badgeText = '내 파일';
+          if (item.type === 'youtube') badgeText = 'YT 곡';
+          if (item.type === 'yt_playlist') badgeText = 'YT 재생목록';
+          li.innerHTML = '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + (idx + 1) + '. ' + item.title + '</span><span class="badge">' + badgeText + '</span>';
+          li.onclick = function() { playTrack(idx); };
+          ul.appendChild(li);
+        })(i);
+      }
+    }
+
+    // 유튜브 트랙 로드 실행 함수
+    function loadYouTubeTrack(track) {
+      document.getElementById('yt-wrapper').style.display = 'block';
+      document.getElementById('yt-guide').innerText = '▶ 아래 유튜브 화면의 재생 버튼을 터치하면 LP판이 돌아갑니다';
+
+      if (!ytReady || !ytPlayer) {
+        pendingTrack = track;
+        return;
+      }
+
+      if (track.type === 'youtube') {
+        // iOS 호환을 위해 cueVideoById로 안전하게 먼저 불러온 뒤 재생 시도
+        ytPlayer.cueVideoById(track.videoId);
+        setTimeout(function() {
+          if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+        }, 300);
+      } else if (track.type === 'yt_playlist') {
+        ytPlayer.cuePlaylist({
+          list: track.listId,
+          listType: 'playlist'
+        });
+        setTimeout(function() {
+          if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
+        }, 500);
+      }
+    }
+
+    // 트랙 재생 실행
+    function playTrack(index) {
+      if (index < 0 || index >= playlist.length) return;
+
+      currentIndex = index;
+      var track = playlist[index];
+      renderPlaylist();
+
+      document.getElementById('trackTitle').innerText = track.title;
+      var labelEl = document.getElementById('vinylLabel');
+
+      if (track.type === 'local') {
+        document.getElementById('trackSource').innerText = '로컬 오디오 파일 재생 중';
+        document.getElementById('yt-wrapper').style.display = 'none';
+        if (ytPlayer && ytReady && ytPlayer.stopVideo) {
+          ytPlayer.stopVideo();
+        }
+        labelEl.style.backgroundImage = 'none';
+
+        audioPlayer.src = track.url;
+        audioPlayer.playbackRate = (currentRPM === 33) ? 1.0 : 1.25;
+        audioPlayer.play();
+        updateTurntableUI(true);
+      } else if (track.type === 'youtube' || track.type === 'yt_playlist') {
+        document.getElementById('trackSource').innerText = '유튜브 / 유튜브 뮤직 스트리밍 연동';
+        audioPlayer.pause();
+        updateTurntableUI(false); // 실제 유튜브 영상 재생이 시작될 때 회전 시작
+        labelEl.style.backgroundImage = track.thumb ? ('url(' + track.thumb + ')') : 'none';
+        loadYouTubeTrack(track);
+      }
+    }
+
+    function togglePlay() {
+      if (currentIndex === -1) {
+        if (playlist.length > 0) playTrack(0);
+        return;
+      }
+      var track = playlist[currentIndex];
+
+      if (track.type === 'local') {
+        if (audioPlayer.paused) {
+          audioPlayer.play();
+          updateTurntableUI(true);
+        } else {
+          audioPlayer.pause();
+          updateTurntableUI(false);
+        }
+      } else if ((track.type === 'youtube' || track.type === 'yt_playlist') && ytReady && ytPlayer) {
+        var state = ytPlayer.getPlayerState();
+        if (state === 1) {
+          ytPlayer.pauseVideo();
+          updateTurntableUI(false);
+        } else {
+          ytPlayer.playVideo();
+        }
+      }
+    }
+
+    function nextTrack() {
+      if (playlist.length === 0) return;
+      var track = playlist[currentIndex];
+      if (track && track.type === 'yt_playlist' && ytReady && ytPlayer && ytPlayer.nextVideo) {
+        ytPlayer.nextVideo();
+        return;
+      }
+      var next = (currentIndex + 1) % playlist.length;
+      playTrack(next);
+    }
+
+    function prevTrack() {
+      if (playlist.length === 0) return;
+      var track = playlist[currentIndex];
+      if (track && track.type === 'yt_playlist' && ytReady && ytPlayer && ytPlayer.previousVideo) {
+        ytPlayer.previousVideo();
+        return;
+      }
+      var prev = (currentIndex - 1 + playlist.length) % playlist.length;
+      playTrack(prev);
+    }
+
+    audioPlayer.onended = function() {
+      nextTrack();
+    };
+
+    // YouTube IFrame API 로드
+    var tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    var firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+    function onYouTubeIframeAPIReady() {
+      ytPlayer = new YT.Player('yt-player', {
+        height: '170',
+        width: '300',
+        playerVars: {
+          'playsinline': 1,
+          'rel': 0,
+          'origin': window.location.origin
+        },
+        events: {
+          'onReady': function() {
+            ytReady = true;
+            if (pendingTrack) {
+              loadYouTubeTrack(pendingTrack);
+              pendingTrack = null;
+            }
+          },
+          'onStateChange': function(event) {
+            if (event.data === 1) {
+              // 실제 영상이 재생 중(PLAYING)일 때만 LP 회전 및 치직거림 시작
+              updateTurntableUI(true);
+              document.getElementById('yt-guide').innerText = '♪ 유튜브 스트리밍 재생 중';
+              if (ytPlayer.getVideoData) {
+                var data = ytPlayer.getVideoData();
+                if (data && data.title && currentIndex !== -1) {
+                  document.getElementById('trackTitle').innerText = data.title;
+                  playlist[currentIndex].title = data.title;
+                  renderPlaylist();
+                }
+                if (data && data.video_id) {
+                  document.getElementById('vinylLabel').style.backgroundImage = 'url(https://img.youtube.com/vi/' + data.video_id + '/hqdefault.jpg)';
+                }
+              }
+            } else if (event.data === 2) {
+              // 일시정지
+              updateTurntableUI(false);
+              document.getElementById('yt-guide').innerText = '⏸ 일시정지됨';
+            } else if (event.data === 0) {
+              // 재생 종료
+              updateTurntableUI(false);
+              var track = playlist[currentIndex];
+              if (track && track.type !== 'yt_playlist') {
+                nextTrack();
+              }
+            }
+          },
+          'onError': function(event) {
+            updateTurntableUI(false);
+            document.getElementById('yt-guide').innerText = '⚠ 이 영상은 저작권자의 외부 재생 제한(오류 ' + event.data + ')으로 재생할 수 없습니다. 다른 링크를 시도해 주세요.';
+          }
+        }
+      });
+    }
+  </script>
 </body>
 </html>
